@@ -19,7 +19,10 @@ import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated.configuracion'
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated.calendario'
 import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authenticated.auditorias'
+import { Route as ApiPublicEnsureBucketsRouteImport } from './routes/api/public/ensure-buckets'
 import { Route as ApiPublicBootstrapRouteImport } from './routes/api/public/bootstrap'
+import { Route as AuthenticatedDocumentosRedRouteImport } from './routes/_authenticated.documentos.red'
+import { Route as AuthenticatedAuditoriasIdRouteImport } from './routes/_authenticated.auditorias.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -72,49 +75,75 @@ const AuthenticatedAuditoriasRoute = AuthenticatedAuditoriasRouteImport.update({
   path: '/auditorias',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiPublicEnsureBucketsRoute = ApiPublicEnsureBucketsRouteImport.update({
+  id: '/api/public/ensure-buckets',
+  path: '/api/public/ensure-buckets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBootstrapRoute = ApiPublicBootstrapRouteImport.update({
   id: '/api/public/bootstrap',
   path: '/api/public/bootstrap',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedDocumentosRedRoute =
+  AuthenticatedDocumentosRedRouteImport.update({
+    id: '/red',
+    path: '/red',
+    getParentRoute: () => AuthenticatedDocumentosRoute,
+  } as any)
+const AuthenticatedAuditoriasIdRoute =
+  AuthenticatedAuditoriasIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAuditoriasRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
-  '/documentos': typeof AuthenticatedDocumentosRoute
+  '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
+  '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
+  '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
+  '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
-  '/documentos': typeof AuthenticatedDocumentosRoute
+  '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
   '/': typeof AuthenticatedIndexRoute
+  '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
+  '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
+  '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
-  '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
+  '/_authenticated/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/_authenticated/proyectos': typeof AuthenticatedProyectosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
+  '/_authenticated/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
+  '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -128,7 +157,10 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/no-conformidades'
     | '/proyectos'
+    | '/auditorias/$id'
+    | '/documentos/red'
     | '/api/public/bootstrap'
+    | '/api/public/ensure-buckets'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -140,7 +172,10 @@ export interface FileRouteTypes {
     | '/no-conformidades'
     | '/proyectos'
     | '/'
+    | '/auditorias/$id'
+    | '/documentos/red'
     | '/api/public/bootstrap'
+    | '/api/public/ensure-buckets'
   id:
     | '__root__'
     | '/_authenticated'
@@ -153,7 +188,10 @@ export interface FileRouteTypes {
     | '/_authenticated/no-conformidades'
     | '/_authenticated/proyectos'
     | '/_authenticated/'
+    | '/_authenticated/auditorias/$id'
+    | '/_authenticated/documentos/red'
     | '/api/public/bootstrap'
+    | '/api/public/ensure-buckets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -161,6 +199,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicBootstrapRoute: typeof ApiPublicBootstrapRoute
+  ApiPublicEnsureBucketsRoute: typeof ApiPublicEnsureBucketsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -235,6 +274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/api/public/ensure-buckets': {
+      id: '/api/public/ensure-buckets'
+      path: '/api/public/ensure-buckets'
+      fullPath: '/api/public/ensure-buckets'
+      preLoaderRoute: typeof ApiPublicEnsureBucketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/bootstrap': {
       id: '/api/public/bootstrap'
       path: '/api/public/bootstrap'
@@ -242,24 +288,66 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBootstrapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/documentos/red': {
+      id: '/_authenticated/documentos/red'
+      path: '/red'
+      fullPath: '/documentos/red'
+      preLoaderRoute: typeof AuthenticatedDocumentosRedRouteImport
+      parentRoute: typeof AuthenticatedDocumentosRoute
+    }
+    '/_authenticated/auditorias/$id': {
+      id: '/_authenticated/auditorias/$id'
+      path: '/$id'
+      fullPath: '/auditorias/$id'
+      preLoaderRoute: typeof AuthenticatedAuditoriasIdRouteImport
+      parentRoute: typeof AuthenticatedAuditoriasRoute
+    }
   }
 }
 
+interface AuthenticatedAuditoriasRouteChildren {
+  AuthenticatedAuditoriasIdRoute: typeof AuthenticatedAuditoriasIdRoute
+}
+
+const AuthenticatedAuditoriasRouteChildren: AuthenticatedAuditoriasRouteChildren =
+  {
+    AuthenticatedAuditoriasIdRoute: AuthenticatedAuditoriasIdRoute,
+  }
+
+const AuthenticatedAuditoriasRouteWithChildren =
+  AuthenticatedAuditoriasRoute._addFileChildren(
+    AuthenticatedAuditoriasRouteChildren,
+  )
+
+interface AuthenticatedDocumentosRouteChildren {
+  AuthenticatedDocumentosRedRoute: typeof AuthenticatedDocumentosRedRoute
+}
+
+const AuthenticatedDocumentosRouteChildren: AuthenticatedDocumentosRouteChildren =
+  {
+    AuthenticatedDocumentosRedRoute: AuthenticatedDocumentosRedRoute,
+  }
+
+const AuthenticatedDocumentosRouteWithChildren =
+  AuthenticatedDocumentosRoute._addFileChildren(
+    AuthenticatedDocumentosRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRoute
+  AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRouteWithChildren
   AuthenticatedCalendarioRoute: typeof AuthenticatedCalendarioRoute
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
-  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
+  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
   AuthenticatedNoConformidadesRoute: typeof AuthenticatedNoConformidadesRoute
   AuthenticatedProyectosRoute: typeof AuthenticatedProyectosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRoute,
+  AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRouteWithChildren,
   AuthenticatedCalendarioRoute: AuthenticatedCalendarioRoute,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
-  AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
+  AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
   AuthenticatedNoConformidadesRoute: AuthenticatedNoConformidadesRoute,
   AuthenticatedProyectosRoute: AuthenticatedProyectosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
@@ -274,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicBootstrapRoute: ApiPublicBootstrapRoute,
+  ApiPublicEnsureBucketsRoute: ApiPublicEnsureBucketsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
