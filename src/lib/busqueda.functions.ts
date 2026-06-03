@@ -73,7 +73,7 @@ export const buscarDocumentosIA = createServerFn({ method: "POST" })
     // Guardar historial (no bloqueante)
     await supabase.from("busquedas_ia").insert({
       query: data.query,
-      resultado_json: out as unknown as Record<string, unknown>,
+      resultado_json: JSON.parse(JSON.stringify(out)),
       usuario_id: context.userId,
     });
 
