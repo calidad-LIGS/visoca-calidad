@@ -15,9 +15,6 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip, TooltipContent, TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { StatusBadge, OutlineBadge, DOC_ESTATUS, DOC_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
 import { DocumentoFormDialog, type Documento } from "./DocumentoFormDialog";
 import { DocumentoFicha } from "./DocumentoFicha";
