@@ -135,7 +135,7 @@ export function DocumentosRed() {
       )}
 
       <DocumentoFicha
-        doc={docs.find((d) => d.id === fichaId) ? (docs.find((d) => d.id === fichaId) as never) : null}
+        doc={docs.find((d) => d.id === fichaId) ?? null}
         onClose={() => setFichaId(null)}
         onOpenDoc={setFichaId}
       />
