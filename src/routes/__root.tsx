@@ -80,14 +80,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "VISOCA — Gestión de Calidad" },
+      { name: "description", content: "Sistema VISOCA para la gestión integral de calidad, documentos, auditorías, no conformidades y proyectos de mejora de LIGS Group." },
+      { name: "author", content: "LIGS Group" },
+      { property: "og:title", content: "VISOCA — Gestión de Calidad" },
+      { property: "og:description", content: "Sistema VISOCA para la gestión integral de calidad, documentos, auditorías, no conformidades y proyectos de mejora de LIGS Group." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
