@@ -132,20 +132,18 @@ export function DocumentosView() {
         }
       />
 
-      {/* Buscador IA (placeholder) + búsqueda textual */}
+      {/* Búsqueda IA + búsqueda textual */}
       <div className="mb-4 flex gap-2">
+        <Button variant="outline" onClick={() => setBuscadorIA(true)} className="shrink-0">
+          <Sparkles className="mr-1.5 h-4 w-4 text-primary" /> Búsqueda IA
+        </Button>
         <div className="relative flex-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
-                <Sparkles className="h-4 w-4" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Búsqueda IA disponible en la Vista de Red / Buscador IA</TooltipContent>
-          </Tooltip>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <Search className="h-4 w-4" />
+          </span>
           <Input
             className="pl-9"
-            placeholder="Busca un proceso o política en lenguaje natural…"
+            placeholder="Filtra por código, nombre o comentario…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           />
