@@ -8,6 +8,7 @@ import { EmpresasTab } from "@/components/configuracion/EmpresasTab";
 import { AreasTab } from "@/components/configuracion/AreasTab";
 import { CargosTab } from "@/components/configuracion/CargosTab";
 import { AlertasTab } from "@/components/configuracion/AlertasTab";
+import { DatosEmpresaTab } from "@/components/configuracion/DatosEmpresaTab";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
   head: () => ({ meta: [{ title: "Configuración — VISOCA-Calidad" }] }),
@@ -51,7 +52,9 @@ function ConfiguracionPage() {
           <TabsTrigger value="areas">Áreas</TabsTrigger>
           <TabsTrigger value="cargos">Cargos</TabsTrigger>
           <TabsTrigger value="alertas">Alertas</TabsTrigger>
+          <TabsTrigger value="empresa">Datos de empresa</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="usuarios">
           <UsuariosTab />
@@ -67,6 +70,9 @@ function ConfiguracionPage() {
         </TabsContent>
         <TabsContent value="alertas">
           <AlertasTab />
+        </TabsContent>
+        <TabsContent value="empresa">
+          <DatosEmpresaTab />
         </TabsContent>
       </Tabs>
     </>

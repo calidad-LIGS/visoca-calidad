@@ -15,12 +15,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip, TooltipContent, TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { StatusBadge, OutlineBadge, DOC_ESTATUS, DOC_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
 import { DocumentoFormDialog, type Documento } from "./DocumentoFormDialog";
 import { DocumentoFicha } from "./DocumentoFicha";
+import { BuscadorIA } from "./BuscadorIA";
 
 const PAGE_SIZE = 25;
 
@@ -38,6 +36,7 @@ export function DocumentosView() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Documento | null>(null);
   const [fichaId, setFichaId] = useState<string | null>(null);
+  const [buscadorIA, setBuscadorIA] = useState(false);
 
   const { data: documentos = [], isLoading } = useQuery({
     queryKey: ["documentos"],
@@ -130,20 +129,18 @@ export function DocumentosView() {
         }
       />
 
-      {/* Buscador IA (placeholder) + búsqueda textual */}
+      {/* Búsqueda IA + búsqueda textual */}
       <div className="mb-4 flex gap-2">
+        <Button variant="outline" onClick={() => setBuscadorIA(true)} className="shrink-0">
+          <Sparkles className="mr-1.5 h-4 w-4 text-primary" /> Búsqueda IA
+        </Button>
         <div className="relative flex-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary">
-                <Sparkles className="h-4 w-4" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Búsqueda IA disponible en la Vista de Red / Buscador IA</TooltipContent>
-          </Tooltip>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <Search className="h-4 w-4" />
+          </span>
           <Input
             className="pl-9"
-            placeholder="Busca un proceso o política en lenguaje natural…"
+            placeholder="Filtra por código, nombre o comentario…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
           />
@@ -225,6 +222,7 @@ export function DocumentosView() {
 
       <DocumentoFormDialog open={formOpen} onOpenChange={setFormOpen} editing={editing} />
       <DocumentoFicha doc={fichaDoc} onClose={() => setFichaId(null)} onOpenDoc={setFichaId} />
+      <BuscadorIA open={buscadorIA} onOpenChange={setBuscadorIA} onSelect={setFichaId} />
     </div>
   );
 }
