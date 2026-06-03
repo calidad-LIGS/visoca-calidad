@@ -39,6 +39,7 @@ export function DocumentosView() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Documento | null>(null);
   const [fichaId, setFichaId] = useState<string | null>(null);
+  const [buscadorIA, setBuscadorIA] = useState(false);
 
   const { data: documentos = [], isLoading } = useQuery({
     queryKey: ["documentos"],
