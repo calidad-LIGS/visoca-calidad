@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ComingSoon } from "@/components/common/ComingSoon";
+import { ProyectosView } from "@/components/proyectos/ProyectosView";
 
 export const Route = createFileRoute("/_authenticated/proyectos")({
   head: () => ({ meta: [{ title: "Proyectos — VISOCA-Calidad" }] }),
-  component: () => <ComingSoon breadcrumb="Proyectos" title="Proyectos" />,
+  component: ProyectosView,
 });
