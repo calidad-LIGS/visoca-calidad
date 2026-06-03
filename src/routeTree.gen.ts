@@ -22,6 +22,7 @@ import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authentic
 import { Route as ApiPublicEnsureBucketsRouteImport } from './routes/api/public/ensure-buckets'
 import { Route as ApiPublicBootstrapRouteImport } from './routes/api/public/bootstrap'
 import { Route as AuthenticatedDocumentosRedRouteImport } from './routes/_authenticated.documentos.red'
+import { Route as AuthenticatedAuditoriasIdRouteImport } from './routes/_authenticated.auditorias.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -90,17 +91,24 @@ const AuthenticatedDocumentosRedRoute =
     path: '/red',
     getParentRoute: () => AuthenticatedDocumentosRoute,
   } as any)
+const AuthenticatedAuditoriasIdRoute =
+  AuthenticatedAuditoriasIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAuditoriasRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
+  '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
@@ -108,13 +116,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
   '/': typeof AuthenticatedIndexRoute
+  '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
@@ -124,13 +133,14 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/_authenticated/proyectos': typeof AuthenticatedProyectosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/_authenticated/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/no-conformidades'
     | '/proyectos'
+    | '/auditorias/$id'
     | '/documentos/red'
     | '/api/public/bootstrap'
     | '/api/public/ensure-buckets'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/no-conformidades'
     | '/proyectos'
     | '/'
+    | '/auditorias/$id'
     | '/documentos/red'
     | '/api/public/bootstrap'
     | '/api/public/ensure-buckets'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/_authenticated/no-conformidades'
     | '/_authenticated/proyectos'
     | '/_authenticated/'
+    | '/_authenticated/auditorias/$id'
     | '/_authenticated/documentos/red'
     | '/api/public/bootstrap'
     | '/api/public/ensure-buckets'
@@ -282,8 +295,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosRedRouteImport
       parentRoute: typeof AuthenticatedDocumentosRoute
     }
+    '/_authenticated/auditorias/$id': {
+      id: '/_authenticated/auditorias/$id'
+      path: '/$id'
+      fullPath: '/auditorias/$id'
+      preLoaderRoute: typeof AuthenticatedAuditoriasIdRouteImport
+      parentRoute: typeof AuthenticatedAuditoriasRoute
+    }
   }
 }
+
+interface AuthenticatedAuditoriasRouteChildren {
+  AuthenticatedAuditoriasIdRoute: typeof AuthenticatedAuditoriasIdRoute
+}
+
+const AuthenticatedAuditoriasRouteChildren: AuthenticatedAuditoriasRouteChildren =
+  {
+    AuthenticatedAuditoriasIdRoute: AuthenticatedAuditoriasIdRoute,
+  }
+
+const AuthenticatedAuditoriasRouteWithChildren =
+  AuthenticatedAuditoriasRoute._addFileChildren(
+    AuthenticatedAuditoriasRouteChildren,
+  )
 
 interface AuthenticatedDocumentosRouteChildren {
   AuthenticatedDocumentosRedRoute: typeof AuthenticatedDocumentosRedRoute
@@ -300,7 +334,7 @@ const AuthenticatedDocumentosRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRoute
+  AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRouteWithChildren
   AuthenticatedCalendarioRoute: typeof AuthenticatedCalendarioRoute
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
@@ -310,7 +344,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRoute,
+  AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRouteWithChildren,
   AuthenticatedCalendarioRoute: AuthenticatedCalendarioRoute,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
@@ -333,3 +367,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
