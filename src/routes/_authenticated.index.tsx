@@ -92,8 +92,8 @@ function DashboardPage() {
     <>
       <PageHeader
         breadcrumb="Inicio"
-        title={`${saludo}${perfil ? `, ${perfil.nombre_completo.split(" ")[0]}` : ""}`}
-        subtitle="Tablero de indicadores · LIGS Group"
+        title="Tablero de Indicadores"
+        subtitle={`${saludo}${perfil ? `, ${perfil.nombre_completo.split(" ")[0]}` : ""} · LIGS Group`}
       />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -188,7 +188,7 @@ const TOOLTIP_STYLE = {
 function ChartCard({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`rounded-lg border border-border bg-card p-5 ${className}`}>
-      <h3 className="mb-3 font-display text-sm font-semibold text-foreground">{title}</h3>
+      <h2 className="mb-3 font-display text-sm font-semibold text-foreground">{title}</h2>
       {children}
     </div>
   );

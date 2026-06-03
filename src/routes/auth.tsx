@@ -47,7 +47,7 @@ function AuthPage() {
     <div className="visoca-noise flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-[420px]">
         <div className="mb-8 text-center">
-          <h1 className="font-display text-4xl font-bold text-primary">VISOCA</h1>
+          <h1 className="font-display text-4xl font-bold text-primary">VISOCA — Sistema de Gestión de Calidad</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Calidad · LIGS Group
           </p>

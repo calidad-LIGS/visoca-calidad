@@ -197,9 +197,9 @@ export function DocumentosView() {
                 <Td className="text-center">{d.nivel}</Td>
                 <Td>
                   <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                    <Button variant="ghost" size="icon" onClick={() => setFichaId(d.id)}><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" aria-label="Ver detalles" onClick={() => setFichaId(d.id)}><Eye className="h-4 w-4" /></Button>
                     {perms.editarDocumento && (
-                      <Button variant="ghost" size="icon" onClick={() => { setEditing(d); setFormOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" aria-label="Editar documento" onClick={() => { setEditing(d); setFormOpen(true); }}><Pencil className="h-4 w-4" /></Button>
                     )}
                   </div>
                 </Td>

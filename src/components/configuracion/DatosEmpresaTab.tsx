@@ -97,7 +97,7 @@ export function DatosEmpresaTab() {
             <div className="flex items-center gap-4">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-lg border border-border bg-surface">
                 {config?.logo_url ? (
-                  <img src={config.logo_url} alt="Logo" className="h-full w-full object-contain" />
+                  <img src={config.logo_url} alt="Logo de la organización" className="h-full w-full object-contain" />
                 ) : (
                   <Building2 className="h-8 w-8 text-muted-foreground" />
                 )}
