@@ -225,6 +225,7 @@ export function DocumentosView() {
 
       <DocumentoFormDialog open={formOpen} onOpenChange={setFormOpen} editing={editing} />
       <DocumentoFicha doc={fichaDoc} onClose={() => setFichaId(null)} onOpenDoc={setFichaId} />
+      <BuscadorIA open={buscadorIA} onOpenChange={setBuscadorIA} onSelect={setFichaId} />
     </div>
   );
 }
