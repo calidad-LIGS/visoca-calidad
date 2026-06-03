@@ -30,9 +30,11 @@ export function DocumentosRed() {
     queryKey: ["documentos-red-nodes"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("documentos").select("id, codigo, nombre, tipo").neq("estatus", "eliminado");
+        .from("documentos")
+        .select("id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url")
+        .neq("estatus", "eliminado");
       if (error) throw error;
-      return data as DocNode[];
+      return data as Documento[];
     },
   });
 
