@@ -257,7 +257,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       const res = await uploadFile("auditorias", path, file);
       const { error } = await supabase.from("auditoria_actas").insert({
         auditoria_id: aud.id as string, departamento, responsable_nombre: responsable,
-        fecha_acta: data.fecha, contenido_json: data as unknown as Record<string, unknown>,
+        fecha_acta: data.fecha, contenido_json: JSON.parse(JSON.stringify(data)),
         pdf_url: res.url, generado_por: perfil?.id ?? null,
       });
       if (error) throw error;
