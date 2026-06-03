@@ -52,7 +52,9 @@ function ConfiguracionPage() {
           <TabsTrigger value="areas">Áreas</TabsTrigger>
           <TabsTrigger value="cargos">Cargos</TabsTrigger>
           <TabsTrigger value="alertas">Alertas</TabsTrigger>
+          <TabsTrigger value="empresa">Datos de empresa</TabsTrigger>
         </TabsList>
+
 
         <TabsContent value="usuarios">
           <UsuariosTab />
