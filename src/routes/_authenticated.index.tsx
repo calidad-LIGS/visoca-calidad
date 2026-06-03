@@ -188,7 +188,7 @@ const TOOLTIP_STYLE = {
 function ChartCard({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`rounded-lg border border-border bg-card p-5 ${className}`}>
-      <h3 className="mb-3 font-display text-sm font-semibold text-foreground">{title}</h3>
+      <h2 className="mb-3 font-display text-sm font-semibold text-foreground">{title}</h2>
       {children}
     </div>
   );
