@@ -79,10 +79,10 @@ export function DocumentosRed() {
   }, [docs, rels]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   // sync when data loads
-  useMemo(() => { setNodes(initialNodes); }, [initialNodes, setNodes]);
+  useEffect(() => { setNodes(initialNodes); setEdges(initialEdges); }, [initialNodes, initialEdges, setNodes, setEdges]);
 
   const onNodeClick = useCallback((_e: React.MouseEvent, node: Node) => setFichaId(node.id), []);
 
