@@ -8,6 +8,7 @@ import { EmpresasTab } from "@/components/configuracion/EmpresasTab";
 import { AreasTab } from "@/components/configuracion/AreasTab";
 import { CargosTab } from "@/components/configuracion/CargosTab";
 import { AlertasTab } from "@/components/configuracion/AlertasTab";
+import { DatosEmpresaTab } from "@/components/configuracion/DatosEmpresaTab";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
   head: () => ({ meta: [{ title: "Configuración — VISOCA-Calidad" }] }),
