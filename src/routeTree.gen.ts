@@ -15,6 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.
 import { Route as AuthenticatedProyectosRouteImport } from './routes/_authenticated.proyectos'
 import { Route as AuthenticatedNoConformidadesRouteImport } from './routes/_authenticated.no-conformidades'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated.documentos'
+import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated.configuracion'
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated.calendario'
 import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authenticated.auditorias'
 import { Route as ApiPublicBootstrapRouteImport } from './routes/api/public/bootstrap'
@@ -49,6 +50,12 @@ const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
   path: '/documentos',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedConfiguracionRoute =
+  AuthenticatedConfiguracionRouteImport.update({
+    id: '/configuracion',
+    path: '/configuracion',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCalendarioRoute = AuthenticatedCalendarioRouteImport.update({
   id: '/calendario',
   path: '/calendario',
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/auditorias': typeof AuthenticatedAuditoriasRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
@@ -79,6 +87,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/auditorias': typeof AuthenticatedAuditoriasRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/documentos': typeof AuthenticatedDocumentosRoute
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
@@ -91,6 +100,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRoute
   '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
+  '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
   '/_authenticated/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/_authenticated/proyectos': typeof AuthenticatedProyectosRoute
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/auditorias'
     | '/calendario'
+    | '/configuracion'
     | '/documentos'
     | '/no-conformidades'
     | '/proyectos'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/auditorias'
     | '/calendario'
+    | '/configuracion'
     | '/documentos'
     | '/no-conformidades'
     | '/proyectos'
@@ -124,6 +136,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/auditorias'
     | '/_authenticated/calendario'
+    | '/_authenticated/configuracion'
     | '/_authenticated/documentos'
     | '/_authenticated/no-conformidades'
     | '/_authenticated/proyectos'
@@ -181,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/configuracion': {
+      id: '/_authenticated/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/calendario': {
       id: '/_authenticated/calendario'
       path: '/calendario'
@@ -208,6 +228,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRoute
   AuthenticatedCalendarioRoute: typeof AuthenticatedCalendarioRoute
+  AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
   AuthenticatedNoConformidadesRoute: typeof AuthenticatedNoConformidadesRoute
   AuthenticatedProyectosRoute: typeof AuthenticatedProyectosRoute
@@ -217,6 +238,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRoute,
   AuthenticatedCalendarioRoute: AuthenticatedCalendarioRoute,
+  AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
   AuthenticatedNoConformidadesRoute: AuthenticatedNoConformidadesRoute,
   AuthenticatedProyectosRoute: AuthenticatedProyectosRoute,
@@ -235,3 +257,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
