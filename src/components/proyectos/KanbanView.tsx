@@ -1,11 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   DndContext, DragOverlay, PointerSensor, useSensor, useSensors,
   useDraggable, useDroppable, type DragEndEvent, type DragStartEvent,
 } from "@dnd-kit/core";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { PROY_ESTATUS } from "@/lib/badges";
 import { Progress } from "@/components/ui/progress";
