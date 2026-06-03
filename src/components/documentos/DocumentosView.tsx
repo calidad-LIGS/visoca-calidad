@@ -21,6 +21,7 @@ import {
 import { StatusBadge, OutlineBadge, DOC_ESTATUS, DOC_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
 import { DocumentoFormDialog, type Documento } from "./DocumentoFormDialog";
 import { DocumentoFicha } from "./DocumentoFicha";
+import { BuscadorIA } from "./BuscadorIA";
 
 const PAGE_SIZE = 25;
 
