@@ -71,6 +71,9 @@ function ConfiguracionPage() {
         <TabsContent value="alertas">
           <AlertasTab />
         </TabsContent>
+        <TabsContent value="empresa">
+          <DatosEmpresaTab />
+        </TabsContent>
       </Tabs>
     </>
   );
