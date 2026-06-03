@@ -11,7 +11,15 @@ import { AlertasTab } from "@/components/configuracion/AlertasTab";
 import { DatosEmpresaTab } from "@/components/configuracion/DatosEmpresaTab";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
-  head: () => ({ meta: [{ title: "Configuración — VISOCA-Calidad" }] }),
+  head: () => ({
+    meta: [
+      { title: "Configuración — VISOCA-Calidad" },
+      { name: "description", content: "Administre usuarios, empresas, áreas, cargos, alertas y datos de la organización en el sistema VISOCA de LIGS Group." },
+      { property: "og:title", content: "Configuración — VISOCA-Calidad" },
+      { property: "og:description", content: "Administre usuarios, empresas, áreas, cargos y datos de la organización en VISOCA." },
+    ],
+    links: [{ rel: "canonical", href: "/configuracion" }],
+  }),
   component: ConfiguracionPage,
 });
 

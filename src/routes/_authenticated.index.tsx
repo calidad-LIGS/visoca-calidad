@@ -14,7 +14,15 @@ import { KpiCard } from "@/components/common/KpiCard";
 import { PNC_ESTATUS, PROY_ESTATUS, AUD_ESTATUS } from "@/lib/badges";
 
 export const Route = createFileRoute("/_authenticated/")({
-  head: () => ({ meta: [{ title: "Dashboard — VISOCA-Calidad" }] }),
+  head: () => ({
+    meta: [
+      { title: "Dashboard — VISOCA-Calidad" },
+      { name: "description", content: "Panel de control de VISOCA: indicadores de documentos, no conformidades, auditorías y proyectos de LIGS Group." },
+      { property: "og:title", content: "Dashboard — VISOCA-Calidad" },
+      { property: "og:description", content: "Panel de control de VISOCA: indicadores de documentos, no conformidades, auditorías y proyectos de LIGS Group." },
+    ],
+    links: [{ rel: "canonical", href: "/" }],
+  }),
   component: DashboardPage,
 });
 

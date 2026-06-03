@@ -9,12 +9,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Iniciar sesión — VISOCA-Calidad" },
-      {
-        name: "description",
-        content:
-          "Acceso al sistema de gestión de calidad VISOCA de LIGS Group.",
-      },
+      { name: "description", content: "Acceso al sistema de gestión de calidad VISOCA de LIGS Group. Inicie sesión con sus credenciales autorizadas." },
+      { property: "og:title", content: "Iniciar sesión — VISOCA-Calidad" },
+      { property: "og:description", content: "Acceso al sistema de gestión de calidad VISOCA de LIGS Group." },
     ],
+    links: [{ rel: "canonical", href: "/auth" }],
   }),
   component: AuthPage,
 });
