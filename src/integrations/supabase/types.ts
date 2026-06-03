@@ -14,16 +14,204 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      area_empresas: {
+        Row: {
+          area_id: string
+          empresa_id: string
+          id: string
+        }
+        Insert: {
+          area_id: string
+          empresa_id: string
+          id?: string
+        }
+        Update: {
+          area_id?: string
+          empresa_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "area_empresas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "area_empresas_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      areas: {
+        Row: {
+          activo: boolean
+          created_at: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      cargos: {
+        Row: {
+          activo: boolean
+          created_at: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      configuracion_alertas: {
+        Row: {
+          dias_alerta_documentos_sin_revision: number
+          dias_alerta_pnc: number
+          dias_sin_auditoria: number
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          dias_alerta_documentos_sin_revision?: number
+          dias_alerta_pnc?: number
+          dias_sin_auditoria?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          dias_alerta_documentos_sin_revision?: number
+          dias_alerta_pnc?: number
+          dias_sin_auditoria?: number
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      empresas: {
+        Row: {
+          activo: boolean
+          clave: string
+          created_at: string
+          id: string
+          nombre: string
+        }
+        Insert: {
+          activo?: boolean
+          clave: string
+          created_at?: string
+          id?: string
+          nombre: string
+        }
+        Update: {
+          activo?: boolean
+          clave?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          activo: boolean
+          created_at: string
+          email: string
+          empresa_id: string | null
+          id: string
+          nombre_completo: string
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          email: string
+          empresa_id?: string | null
+          id: string
+          nombre_completo: string
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          email?: string
+          empresa_id?: string | null
+          id?: string
+          nombre_completo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role:
+        | "gerente_calidad"
+        | "jefe_calidad"
+        | "analista"
+        | "auditor_interno"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +338,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: [
+        "gerente_calidad",
+        "jefe_calidad",
+        "analista",
+        "auditor_interno",
+      ],
+    },
   },
 } as const
