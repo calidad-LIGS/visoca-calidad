@@ -9,61 +9,272 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as AuthenticatedProyectosRouteImport } from './routes/_authenticated.proyectos'
+import { Route as AuthenticatedNoConformidadesRouteImport } from './routes/_authenticated.no-conformidades'
+import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated.documentos'
+import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated.configuracion'
+import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated.calendario'
+import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authenticated.auditorias'
+import { Route as ApiPublicBootstrapRouteImport } from './routes/api/public/bootstrap'
 
-const IndexRoute = IndexRouteImport.update({
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProyectosRoute = AuthenticatedProyectosRouteImport.update({
+  id: '/proyectos',
+  path: '/proyectos',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNoConformidadesRoute =
+  AuthenticatedNoConformidadesRouteImport.update({
+    id: '/no-conformidades',
+    path: '/no-conformidades',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDocumentosRoute = AuthenticatedDocumentosRouteImport.update({
+  id: '/documentos',
+  path: '/documentos',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedConfiguracionRoute =
+  AuthenticatedConfiguracionRouteImport.update({
+    id: '/configuracion',
+    path: '/configuracion',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCalendarioRoute = AuthenticatedCalendarioRouteImport.update({
+  id: '/calendario',
+  path: '/calendario',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAuditoriasRoute = AuthenticatedAuditoriasRouteImport.update({
+  id: '/auditorias',
+  path: '/auditorias',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ApiPublicBootstrapRoute = ApiPublicBootstrapRouteImport.update({
+  id: '/api/public/bootstrap',
+  path: '/api/public/bootstrap',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/calendario': typeof AuthenticatedCalendarioRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/documentos': typeof AuthenticatedDocumentosRoute
+  '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
+  '/proyectos': typeof AuthenticatedProyectosRoute
+  '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/calendario': typeof AuthenticatedCalendarioRoute
+  '/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/documentos': typeof AuthenticatedDocumentosRoute
+  '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
+  '/proyectos': typeof AuthenticatedProyectosRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRoute
+  '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
+  '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
+  '/_authenticated/documentos': typeof AuthenticatedDocumentosRoute
+  '/_authenticated/no-conformidades': typeof AuthenticatedNoConformidadesRoute
+  '/_authenticated/proyectos': typeof AuthenticatedProyectosRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/auditorias'
+    | '/calendario'
+    | '/configuracion'
+    | '/documentos'
+    | '/no-conformidades'
+    | '/proyectos'
+    | '/api/public/bootstrap'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/auth'
+    | '/sitemap.xml'
+    | '/auditorias'
+    | '/calendario'
+    | '/configuracion'
+    | '/documentos'
+    | '/no-conformidades'
+    | '/proyectos'
+    | '/'
+    | '/api/public/bootstrap'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/_authenticated/auditorias'
+    | '/_authenticated/calendario'
+    | '/_authenticated/configuracion'
+    | '/_authenticated/documentos'
+    | '/_authenticated/no-conformidades'
+    | '/_authenticated/proyectos'
+    | '/_authenticated/'
+    | '/api/public/bootstrap'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicBootstrapRoute: typeof ApiPublicBootstrapRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/proyectos': {
+      id: '/_authenticated/proyectos'
+      path: '/proyectos'
+      fullPath: '/proyectos'
+      preLoaderRoute: typeof AuthenticatedProyectosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/no-conformidades': {
+      id: '/_authenticated/no-conformidades'
+      path: '/no-conformidades'
+      fullPath: '/no-conformidades'
+      preLoaderRoute: typeof AuthenticatedNoConformidadesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/documentos': {
+      id: '/_authenticated/documentos'
+      path: '/documentos'
+      fullPath: '/documentos'
+      preLoaderRoute: typeof AuthenticatedDocumentosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/configuracion': {
+      id: '/_authenticated/configuracion'
+      path: '/configuracion'
+      fullPath: '/configuracion'
+      preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/calendario': {
+      id: '/_authenticated/calendario'
+      path: '/calendario'
+      fullPath: '/calendario'
+      preLoaderRoute: typeof AuthenticatedCalendarioRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/auditorias': {
+      id: '/_authenticated/auditorias'
+      path: '/auditorias'
+      fullPath: '/auditorias'
+      preLoaderRoute: typeof AuthenticatedAuditoriasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/public/bootstrap': {
+      id: '/api/public/bootstrap'
+      path: '/api/public/bootstrap'
+      fullPath: '/api/public/bootstrap'
+      preLoaderRoute: typeof ApiPublicBootstrapRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRoute
+  AuthenticatedCalendarioRoute: typeof AuthenticatedCalendarioRoute
+  AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
+  AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRoute
+  AuthenticatedNoConformidadesRoute: typeof AuthenticatedNoConformidadesRoute
+  AuthenticatedProyectosRoute: typeof AuthenticatedProyectosRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRoute,
+  AuthenticatedCalendarioRoute: AuthenticatedCalendarioRoute,
+  AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
+  AuthenticatedDocumentosRoute: AuthenticatedDocumentosRoute,
+  AuthenticatedNoConformidadesRoute: AuthenticatedNoConformidadesRoute,
+  AuthenticatedProyectosRoute: AuthenticatedProyectosRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AuthRoute: AuthRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicBootstrapRoute: ApiPublicBootstrapRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
