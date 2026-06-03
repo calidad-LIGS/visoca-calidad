@@ -13,13 +13,13 @@ import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { DOC_TIPO_LABEL } from "@/lib/badges";
 import { DocumentoFicha } from "./DocumentoFicha";
+import type { Documento } from "./DocumentoFormDialog";
 import { BuscadorIA } from "./BuscadorIA";
 
 const TIPO_COLOR: Record<string, string> = {
   politica: "#3B7DD8", proceso: "#1BC8A0", manual: "#8B5CF6", formato: "#F5A623", acta: "#E54B4B",
 };
 
-interface DocNode { id: string; codigo: string; nombre: string; tipo: string }
 interface Rel { documento_origen_id: string; documento_destino_id: string; tipo_relacion: string }
 
 export function DocumentosRed() {
