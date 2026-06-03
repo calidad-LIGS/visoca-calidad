@@ -92,8 +92,8 @@ function DashboardPage() {
     <>
       <PageHeader
         breadcrumb="Inicio"
-        title={`${saludo}${perfil ? `, ${perfil.nombre_completo.split(" ")[0]}` : ""}`}
-        subtitle="Tablero de indicadores · LIGS Group"
+        title="Tablero de Indicadores"
+        subtitle={`${saludo}${perfil ? `, ${perfil.nombre_completo.split(" ")[0]}` : ""} · LIGS Group`}
       />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
