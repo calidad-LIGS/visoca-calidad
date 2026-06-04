@@ -25,23 +25,6 @@ import { BuscadorIA } from "./BuscadorIA";
 const PAGE_SIZE = 25;
 const DOC_COLS = "id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url";
 
-// Aplica los filtros activos a un query builder de Supabase.
-function applyFilters<T extends { eq: (c: string, v: unknown) => T; in: (c: string, v: unknown[]) => T; or: (f: string) => T }>(
-  q: T, tab: string, fEmpresa: string, fArea: string, fTipo: string, search: string,
-): T {
-  if (tab === "vigentes") q = q.eq("estatus", "vigente");
-  else if (tab === "revision") q = q.eq("estatus", "en_revision");
-  else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
-  if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
-  if (fArea !== "all") q = q.eq("area_id", fArea);
-  if (fTipo !== "all") q = q.eq("tipo", fTipo);
-  const s = search.trim();
-  if (s) {
-    const safe = s.replace(/[%,()]/g, " ");
-    q = q.or(`codigo.ilike.%${safe}%,nombre.ilike.%${safe}%,comentarios.ilike.%${safe}%`);
-  }
-  return q;
-}
 
 export function DocumentosView() {
   const perms = usePermisos();
