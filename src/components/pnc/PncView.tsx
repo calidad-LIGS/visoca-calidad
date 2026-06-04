@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearch } from "@tanstack/react-router";
 import * as XLSX from "xlsx";
 import { Plus, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,12 @@ export function PncView() {
   const [fEstatus, setFEstatus] = useState("all");
   const [fEmpresa, setFEmpresa] = useState("all");
   const [fOrigen, setFOrigen] = useState("all");
+
+  const { pncId } = useSearch({ from: "/_authenticated/no-conformidades" });
+
+  useEffect(() => {
+    if (pncId) setDetailId(pncId);
+  }, [pncId]);
 
   const { data: pncs = [], isLoading } = useQuery({
     queryKey: ["pnc"],

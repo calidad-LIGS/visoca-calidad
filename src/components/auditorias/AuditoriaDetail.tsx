@@ -136,7 +136,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
   }
 }
 
-function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc: { numero_anio: string } | null }> }) {
+function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }> }) {
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const perms = usePermisos();
@@ -208,7 +208,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
             <Td className="max-w-[20rem] truncate text-foreground">{h.descripcion}</Td>
             <Td>{areas.find((a) => a.id === h.area_id)?.nombre ?? "—"}</Td>
             <Td>{h.responsable_nombre ?? "—"}</Td>
-            <Td>{h.pnc ? <button className="font-mono text-xs text-primary hover:underline" onClick={() => navigate({ to: "/no-conformidades" })}>{h.pnc.numero_anio}</button> : "—"}</Td>
+            <Td>{h.pnc ? <button className="font-mono text-xs text-primary hover:underline" onClick={() => navigate({ to: "/no-conformidades", search: { pncId: h.pnc_id ?? "" } })}>{h.pnc.numero_anio}</button> : "—"}</Td>
             <Td className="text-xs">{h.estatus}</Td>
           </tr>
         ))}
