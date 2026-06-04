@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
+import { toast } from "sonner";
 import { Plus, FileDown, Search, Eye, Pencil, Sparkles, Network } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,18 +10,21 @@ import { usePermisos } from "@/lib/permisos";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataTable, Td } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
+import { Pagination } from "@/components/common/Pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatusBadge, OutlineBadge, DOC_ESTATUS, DOC_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
+import { StatusBadge, OutlineBadge, DOC_ESTATUS, DOC_TIPO_LABEL } from "@/lib/badges";
 import { DocumentoFormDialog, type Documento } from "./DocumentoFormDialog";
 import { DocumentoFicha } from "./DocumentoFicha";
 import { BuscadorIA } from "./BuscadorIA";
 
 const PAGE_SIZE = 25;
+const DOC_COLS = "id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url";
+
 
 export function DocumentosView() {
   const perms = usePermisos();
@@ -38,52 +42,109 @@ export function DocumentosView() {
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscadorIA, setBuscadorIA] = useState(false);
 
+  // Reset de página al cambiar filtros
+  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, search]);
+
+  // Tabla paginada (server-side)
   const { data: documentos = [], isLoading } = useQuery({
-    queryKey: ["documentos"],
+    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, search, page],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("documentos")
-        .select("id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url")
-        .order("codigo");
+      let q = supabase.from("documentos").select(DOC_COLS);
+      if (tab === "vigentes") q = q.eq("estatus", "vigente");
+      else if (tab === "revision") q = q.eq("estatus", "en_revision");
+      else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
+      if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+      if (fArea !== "all") q = q.eq("area_id", fArea);
+      if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      const s = search.trim();
+      if (s) {
+        const safe = s.replace(/[%,()]/g, " ");
+        q = q.or(`codigo.ilike.%${safe}%,nombre.ilike.%${safe}%,comentarios.ilike.%${safe}%`);
+      }
+      const { data, error } = await q
+        .order("codigo")
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (error) throw error;
       return data as Documento[];
     },
     staleTime: 60_000,
   });
 
+  // Conteo total para la paginación (mismos filtros)
+  const { data: total = 0 } = useQuery({
+    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, search],
+    queryFn: async () => {
+      let q = supabase.from("documentos").select("*", { count: "exact", head: true });
+      if (tab === "vigentes") q = q.eq("estatus", "vigente");
+      else if (tab === "revision") q = q.eq("estatus", "en_revision");
+      else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
+      if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+      if (fArea !== "all") q = q.eq("area_id", fArea);
+      if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      const s = search.trim();
+      if (s) {
+        const safe = s.replace(/[%,()]/g, " ");
+        q = q.or(`codigo.ilike.%${safe}%,nombre.ilike.%${safe}%,comentarios.ilike.%${safe}%`);
+      }
+      const { count, error } = await q;
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 60_000,
+  });
+
+  // Conteos de pestañas sobre el total (sin filtros adicionales)
+  const { data: estatusRows = [] } = useQuery({
+    queryKey: ["documentos-counts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("documentos").select("estatus");
+      if (error) throw error;
+      return data as { estatus: string }[];
+    },
+    staleTime: 60_000,
+  });
+
+  // Documento abierto en ficha (puede no estar en la página actual)
+  const { data: fichaDoc = null } = useQuery({
+    queryKey: ["documento-ficha", fichaId],
+    enabled: !!fichaId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("documentos").select(DOC_COLS).eq("id", fichaId!).single();
+      if (error) throw error;
+      return data as Documento;
+    },
+  });
+
   const empresaName = (id: string | null) => empresas.find((e) => e.id === id)?.nombre ?? "—";
   const areaName = (id: string | null) => areas.find((a) => a.id === id)?.nombre ?? "—";
 
   const counts = useMemo(() => ({
-    vigentes: documentos.filter((d) => d.estatus === "vigente").length,
-    todos: documentos.length,
-    revision: documentos.filter((d) => d.estatus === "en_revision").length,
-    historico: documentos.filter((d) => ["sustituido", "eliminado"].includes(d.estatus)).length,
-  }), [documentos]);
+    vigentes: estatusRows.filter((d) => d.estatus === "vigente").length,
+    todos: estatusRows.length,
+    revision: estatusRows.filter((d) => d.estatus === "en_revision").length,
+    historico: estatusRows.filter((d) => ["sustituido", "eliminado"].includes(d.estatus)).length,
+  }), [estatusRows]);
 
-  const filtered = useMemo(() => {
-    let rows = documentos;
-    if (tab === "vigentes") rows = rows.filter((d) => d.estatus === "vigente");
-    else if (tab === "revision") rows = rows.filter((d) => d.estatus === "en_revision");
-    else if (tab === "historico") rows = rows.filter((d) => ["sustituido", "eliminado"].includes(d.estatus));
-    if (fEmpresa !== "all") rows = rows.filter((d) => d.empresa_id === fEmpresa);
-    if (fArea !== "all") rows = rows.filter((d) => d.area_id === fArea);
-    if (fTipo !== "all") rows = rows.filter((d) => d.tipo === fTipo);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      rows = rows.filter((d) =>
-        d.codigo.toLowerCase().includes(q) ||
-        d.nombre.toLowerCase().includes(q) ||
-        (d.comentarios ?? "").toLowerCase().includes(q));
+  // Exporta TODOS los registros filtrados (sin paginar)
+  const exportXLS = async () => {
+    let q = supabase.from("documentos").select(DOC_COLS);
+    if (tab === "vigentes") q = q.eq("estatus", "vigente");
+    else if (tab === "revision") q = q.eq("estatus", "en_revision");
+    else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
+    if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+    if (fArea !== "all") q = q.eq("area_id", fArea);
+    if (fTipo !== "all") q = q.eq("tipo", fTipo);
+    const s = search.trim();
+    if (s) {
+      const safe = s.replace(/[%,()]/g, " ");
+      q = q.or(`codigo.ilike.%${safe}%,nombre.ilike.%${safe}%,comentarios.ilike.%${safe}%`);
     }
-    return rows;
-  }, [documentos, tab, fEmpresa, fArea, fTipo, search]);
-
-  const pageRows = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
-
-  const exportXLS = () => {
-    const rows = filtered.map((d) => ({
+    const { data, error } = await q.order("codigo");
+    if (error || !data) {
+      toast.error("No se pudo exportar los documentos.");
+      return;
+    }
+    const rows = (data as Documento[]).map((d) => ({
       Empresa: empresaName(d.empresa_id),
       Tipo: DOC_TIPO_LABEL[d.tipo] ?? d.tipo,
       Código: d.codigo,
@@ -101,8 +162,6 @@ export function DocumentosView() {
     XLSX.utils.book_append_sheet(wb, ws, "Documentos");
     XLSX.writeFile(wb, "control_de_docs.xlsx");
   };
-
-  const fichaDoc = documentos.find((d) => d.id === fichaId) ?? null;
 
   return (
     <div>
@@ -142,12 +201,12 @@ export function DocumentosView() {
             className="pl-9"
             placeholder="Filtra por código, nombre o comentario…"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <Tabs value={tab} onValueChange={(v) => { setTab(v); setPage(0); }} className="mb-4">
+      <Tabs value={tab} onValueChange={setTab} className="mb-4">
         <TabsList>
           <TabsTrigger value="vigentes">Vigentes ({counts.vigentes})</TabsTrigger>
           <TabsTrigger value="todos">Todos ({counts.todos})</TabsTrigger>
@@ -157,15 +216,15 @@ export function DocumentosView() {
       </Tabs>
 
       <div className="mb-4 flex flex-wrap gap-2">
-        <FilterSelect value={fEmpresa} onChange={(v) => { setFEmpresa(v); setPage(0); }} placeholder="Empresa"
+        <FilterSelect value={fEmpresa} onChange={setFEmpresa} placeholder="Empresa"
           options={empresas.map((e) => ({ value: e.id, label: e.nombre }))} />
-        <FilterSelect value={fArea} onChange={(v) => { setFArea(v); setPage(0); }} placeholder="Área"
+        <FilterSelect value={fArea} onChange={setFArea} placeholder="Área"
           options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
-        <FilterSelect value={fTipo} onChange={(v) => { setFTipo(v); setPage(0); }} placeholder="Tipo"
+        <FilterSelect value={fTipo} onChange={setFTipo} placeholder="Tipo"
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
       </div>
 
-      {!isLoading && documentos.length === 0 ? (
+      {!isLoading && estatusRows.length === 0 ? (
         <EmptyState
           icon={<Search className="h-10 w-10" />}
           title="No hay documentos registrados"
@@ -180,10 +239,10 @@ export function DocumentosView() {
         <>
           <DataTable
             headers={["Empresa", "Tipo", "Código", "Nombre", "Área", "Versión", "Fecha", "Estatus", "Origen", "Nivel", ""]}
-            isEmpty={pageRows.length === 0}
+            isEmpty={documentos.length === 0}
             empty="Sin documentos para los filtros aplicados."
           >
-            {pageRows.map((d) => (
+            {documentos.map((d) => (
               <tr key={d.id} className="group">
                 <Td>{empresaName(d.empresa_id)}</Td>
                 <Td><OutlineBadge>{DOC_TIPO_LABEL[d.tipo] ?? d.tipo}</OutlineBadge></Td>
@@ -207,16 +266,7 @@ export function DocumentosView() {
             ))}
           </DataTable>
 
-          {totalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-              <span>{filtered.length} documentos</span>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
-                <span>{page + 1} / {totalPages}</span>
-                <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
-              </div>
-            </div>
-          )}
+          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} noun="documentos" />
         </>
       )}
 
