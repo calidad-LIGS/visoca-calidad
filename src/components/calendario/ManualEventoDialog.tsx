@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type KeyboardEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
@@ -16,6 +17,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function ManualEventoDialog({
   open, onOpenChange,
 }: { open: boolean; onOpenChange: (v: boolean) => void }) {
@@ -30,13 +33,37 @@ export function ManualEventoDialog({
   const [fechaFin, setFechaFin] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [area, setArea] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [invitados, setInvitados] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
       setTitulo(""); setDescripcion(""); setFechaInicio(""); setFechaFin("");
-      setEmpresa(""); setArea("");
+      setEmpresa(""); setArea(""); setEmailInput(""); setInvitados([]);
     }
   }, [open]);
+
+  const addEmail = () => {
+    const value = emailInput.trim().toLowerCase();
+    if (!value) return;
+    if (!EMAIL_RE.test(value)) {
+      toast.error("Correo no válido");
+      return;
+    }
+    if (invitados.includes(value)) {
+      toast.error("Ese correo ya fue agregado");
+      return;
+    }
+    setInvitados((prev) => [...prev, value]);
+    setEmailInput("");
+  };
+
+  const onEmailKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addEmail();
+    }
+  };
 
   const create = useMutation({
     mutationFn: async () => {
@@ -50,6 +77,7 @@ export function ManualEventoDialog({
         area_id: area || null,
         color: EVENT_COLORS.manual,
         all_day: true,
+        invitados_email: invitados,
         creado_por: perfil?.id ?? null,
       });
       if (error) throw error;
@@ -104,6 +132,45 @@ export function ManualEventoDialog({
           <div className="space-y-1.5">
             <Label>Descripción</Label>
             <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Invitar personas</Label>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                placeholder="correo@ejemplo.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                onKeyDown={onEmailKeyDown}
+              />
+              <Button type="button" variant="outline" size="icon" onClick={addEmail}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {invitados.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {invitados.map((email) => (
+                  <span
+                    key={email}
+                    className="inline-flex items-center gap-1 rounded-md border border-border bg-elevated px-2 py-0.5 text-xs text-foreground"
+                  >
+                    {email}
+                    <button
+                      type="button"
+                      aria-label={`Quitar ${email}`}
+                      onClick={() => setInvitados((prev) => prev.filter((x) => x !== email))}
+                      className="text-muted-foreground hover:text-danger"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Los invitados se incluyen al exportar el evento a .ics para enviar invitaciones desde Google Calendar.
+            </p>
           </div>
         </div>
         <DialogFooter>

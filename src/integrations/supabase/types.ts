@@ -687,6 +687,7 @@ export type Database = {
           fecha_inicio: string
           google_calendar_event_id: string | null
           id: string
+          invitados_email: string[]
           referencia_id: string | null
           referencia_tabla: string | null
           tipo: string
@@ -704,6 +705,7 @@ export type Database = {
           fecha_inicio: string
           google_calendar_event_id?: string | null
           id?: string
+          invitados_email?: string[]
           referencia_id?: string | null
           referencia_tabla?: string | null
           tipo: string
@@ -721,6 +723,7 @@ export type Database = {
           fecha_inicio?: string
           google_calendar_event_id?: string | null
           id?: string
+          invitados_email?: string[]
           referencia_id?: string | null
           referencia_tabla?: string | null
           tipo?: string
