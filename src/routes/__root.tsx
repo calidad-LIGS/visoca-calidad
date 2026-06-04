@@ -87,6 +87,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Sistema VISOCA para la gestión integral de calidad, documentos, auditorías, no conformidades y proyectos de mejora de LIGS Group." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "VISOCA — Gestión de Calidad" },
+      { name: "twitter:description", content: "Sistema VISOCA para la gestión integral de calidad, documentos, auditorías, no conformidades y proyectos de mejora de LIGS Group." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/78d840fb-98b2-4976-b7da-21581c4114a6" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/78d840fb-98b2-4976-b7da-21581c4114a6" },
     ],
     links: [
       {
