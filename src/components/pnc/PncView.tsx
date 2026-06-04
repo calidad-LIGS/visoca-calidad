@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import * as XLSX from "xlsx";
+import { toast } from "sonner";
 import { Plus, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
@@ -11,6 +12,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataTable, Td } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
+import { Pagination } from "@/components/common/Pagination";
 import { Button } from "@/components/ui/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -21,6 +23,8 @@ import {
 import { PncFormDialog } from "./PncFormDialog";
 import { PncDetail, type Pnc } from "./PncDetail";
 
+const PAGE_SIZE = 25;
+
 export function PncView() {
   const perms = usePermisos();
   const { data: empresas = [] } = useEmpresas();
@@ -30,6 +34,7 @@ export function PncView() {
   const [fEstatus, setFEstatus] = useState("all");
   const [fEmpresa, setFEmpresa] = useState("all");
   const [fOrigen, setFOrigen] = useState("all");
+  const [page, setPage] = useState(0);
 
   const { pncId } = useSearch({ from: "/_authenticated/no-conformidades" });
 
@@ -37,12 +42,50 @@ export function PncView() {
     if (pncId) setDetailId(pncId);
   }, [pncId]);
 
+  // Reset de página al cambiar filtros
+  useEffect(() => { setPage(0); }, [fEstatus, fEmpresa, fOrigen]);
+
+  const hasFilters = fEstatus !== "all" || fEmpresa !== "all" || fOrigen !== "all";
+
+  // Tabla paginada (server-side)
   const { data: pncs = [], isLoading } = useQuery({
-    queryKey: ["pnc"],
+    queryKey: ["pnc", page, fEstatus, fEmpresa, fOrigen],
     queryFn: async () => {
-      const { data, error } = await supabase.from("pnc").select("*").order("created_at", { ascending: false });
+      let q = supabase.from("pnc").select("*");
+      if (fEstatus !== "all") q = q.eq("estatus", fEstatus);
+      if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+      if (fOrigen !== "all") q = q.eq("origen", fOrigen);
+      const { data, error } = await q
+        .order("created_at", { ascending: false })
+        .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
       if (error) throw error;
       return data as Pnc[];
+    },
+    staleTime: 30_000,
+  });
+
+  // Conteo total para la paginación (mismos filtros, sin datos)
+  const { data: total = 0 } = useQuery({
+    queryKey: ["pnc-count", fEstatus, fEmpresa, fOrigen],
+    queryFn: async () => {
+      let q = supabase.from("pnc").select("*", { count: "exact", head: true });
+      if (fEstatus !== "all") q = q.eq("estatus", fEstatus);
+      if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+      if (fOrigen !== "all") q = q.eq("origen", fOrigen);
+      const { count, error } = await q;
+      if (error) throw error;
+      return count ?? 0;
+    },
+    staleTime: 30_000,
+  });
+
+  // KPIs sobre el total (sin paginar), columnas mínimas
+  const { data: kpiRows = [] } = useQuery({
+    queryKey: ["pnc-kpi"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("pnc").select("estatus, fecha_compromiso, fecha_cierre");
+      if (error) throw error;
+      return data as { estatus: string; fecha_compromiso: string | null; fecha_cierre: string | null }[];
     },
     staleTime: 30_000,
   });
@@ -50,24 +93,26 @@ export function PncView() {
   const areaName = (id: string | null) => areas.find((a) => a.id === id)?.nombre ?? "—";
 
   const kpis = useMemo(() => {
-    const abiertos = pncs.filter((p) => p.estatus !== "finalizado").length;
-    const vencidos = pncs.filter((p) => p.estatus !== "finalizado" && p.fecha_compromiso && new Date(p.fecha_compromiso) < new Date()).length;
-    const verificacion = pncs.filter((p) => p.estatus === "verificacion").length;
+    const abiertos = kpiRows.filter((p) => p.estatus !== "finalizado").length;
+    const vencidos = kpiRows.filter((p) => p.estatus !== "finalizado" && p.fecha_compromiso && new Date(p.fecha_compromiso) < new Date()).length;
+    const verificacion = kpiRows.filter((p) => p.estatus === "verificacion").length;
     const now = new Date();
-    const cerradosMes = pncs.filter((p) => p.fecha_cierre && new Date(p.fecha_cierre).getMonth() === now.getMonth() && new Date(p.fecha_cierre).getFullYear() === now.getFullYear()).length;
+    const cerradosMes = kpiRows.filter((p) => p.fecha_cierre && new Date(p.fecha_cierre).getMonth() === now.getMonth() && new Date(p.fecha_cierre).getFullYear() === now.getFullYear()).length;
     return { abiertos, vencidos, verificacion, cerradosMes };
-  }, [pncs]);
+  }, [kpiRows]);
 
-  const filtered = useMemo(() => {
-    let rows = pncs;
-    if (fEstatus !== "all") rows = rows.filter((p) => p.estatus === fEstatus);
-    if (fEmpresa !== "all") rows = rows.filter((p) => p.empresa_id === fEmpresa);
-    if (fOrigen !== "all") rows = rows.filter((p) => p.origen === fOrigen);
-    return rows;
-  }, [pncs, fEstatus, fEmpresa, fOrigen]);
-
-  const exportXLS = () => {
-    const rows = filtered.map((p) => ({
+  // Exporta TODOS los registros filtrados (sin paginar)
+  const exportXLS = async () => {
+    let q = supabase.from("pnc").select("*");
+    if (fEstatus !== "all") q = q.eq("estatus", fEstatus);
+    if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+    if (fOrigen !== "all") q = q.eq("origen", fOrigen);
+    const { data, error } = await q.order("created_at", { ascending: false });
+    if (error || !data) {
+      toast.error("No se pudo exportar los PNC.");
+      return;
+    }
+    const rows = (data as Pnc[]).map((p) => ({
       "#": p.numero_anio, Descripción: p.descripcion, Estatus: PNC_ESTATUS[p.estatus]?.label,
       Origen: PNC_ORIGEN_LABEL[p.origen], Área: areaName(p.area_id),
       Proceso: p.proceso_texto ?? "", Razón: p.razon ? PNC_RAZON_LABEL[p.razon] : "",
@@ -106,29 +151,33 @@ export function PncView() {
         <Filt value={fOrigen} onChange={setFOrigen} placeholder="Origen" options={Object.entries(PNC_ORIGEN_LABEL).map(([value, label]) => ({ value, label }))} />
       </div>
 
-      {!isLoading && pncs.length === 0 ? (
+      {!isLoading && total === 0 && !hasFilters ? (
         <EmptyState title="Sin no conformidades registradas" description="¡Eso es una buena señal!"
           action={perms.crearPnc && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nuevo PNC</Button>} />
       ) : (
-        <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isEmpty={filtered.length === 0} empty="Sin PNC para los filtros aplicados.">
-          {filtered.map((p) => {
-            const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "finalizado");
-            const dotColor = { accent: "#1BC8A0", warning: "#F5A623", danger: "#E54B4B" }[info.color];
-            return (
-              <tr key={p.id} className="cursor-pointer" onClick={() => setDetailId(p.id)}>
-                <Td><span className="font-mono text-primary">{p.numero_anio}</span></Td>
-                <Td className="max-w-[18rem] truncate text-foreground">{p.descripcion}</Td>
-                <Td><StatusBadge cfg={PNC_ESTATUS[p.estatus]} /></Td>
-                <Td className="text-xs">{PNC_ORIGEN_LABEL[p.origen]}</Td>
-                <Td>{areaName(p.area_id)}</Td>
-                <Td className="text-xs">{p.razon ? PNC_RAZON_LABEL[p.razon] : "—"}</Td>
-                <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
-                <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
-                <Td><span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span></Td>
-              </tr>
-            );
-          })}
-        </DataTable>
+        <>
+          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
+            {pncs.map((p) => {
+              const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "finalizado");
+              const dotColor = { accent: "#1BC8A0", warning: "#F5A623", danger: "#E54B4B" }[info.color];
+              return (
+                <tr key={p.id} className="cursor-pointer" onClick={() => setDetailId(p.id)}>
+                  <Td><span className="font-mono text-primary">{p.numero_anio}</span></Td>
+                  <Td className="max-w-[18rem] truncate text-foreground">{p.descripcion}</Td>
+                  <Td><StatusBadge cfg={PNC_ESTATUS[p.estatus]} /></Td>
+                  <Td className="text-xs">{PNC_ORIGEN_LABEL[p.origen]}</Td>
+                  <Td>{areaName(p.area_id)}</Td>
+                  <Td className="text-xs">{p.razon ? PNC_RAZON_LABEL[p.razon] : "—"}</Td>
+                  <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
+                  <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
+                  <Td><span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span></Td>
+                </tr>
+              );
+            })}
+          </DataTable>
+
+          <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} noun="PNC" />
+        </>
       )}
 
       <PncFormDialog open={formOpen} onOpenChange={setFormOpen} />
