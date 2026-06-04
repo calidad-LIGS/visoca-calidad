@@ -118,6 +118,7 @@ export function ActaDocument({ d }: { d: ActaData }) {
 
         <View style={s.sign}>
           <View style={s.signCol}>
+            {/* TODO: leer desde org_config.jefe_calidad_nombre */}
             <Text style={s.signLine}>Nombre: Ing. Sousthy M. De la Cruz Gavilla</Text>
             <Text style={{ fontSize: 8 }}>Puesto: Jefe de Calidad</Text>
           </View>
