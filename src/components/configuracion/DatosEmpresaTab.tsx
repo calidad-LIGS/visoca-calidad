@@ -68,8 +68,8 @@ export function DatosEmpresaTab() {
     if (!file) return;
     setUploading(true);
     try {
-      const { url } = await uploadFile("org-assets", `logo/${Date.now()}_${sanitizeSegment(file.name)}`, file);
-      await save.mutateAsync({ logo_url: url });
+      const { path } = await uploadFile("org-assets", `logo/${Date.now()}_${sanitizeSegment(file.name)}`, file);
+      await save.mutateAsync({ logo_url: getPublicUrl("org-assets", path) });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

@@ -380,7 +380,7 @@ function EvidenciasTab({ pnc }: { pnc: Pnc }) {
       const path = `${sanitizeSegment(pnc.numero_anio)}/${tipo}-${Date.now()}-${sanitizeSegment(file.name)}`;
       const res = await uploadFile("pnc-evidencias", path, file);
       const { error } = await supabase.from("pnc_evidencias").insert({
-        pnc_id: pnc.id, nombre_archivo: file.name, archivo_url: res.url, tipo, subido_por: perfil?.id ?? null,
+        pnc_id: pnc.id, nombre_archivo: file.name, archivo_url: res.path, tipo, subido_por: perfil?.id ?? null,
       });
       if (error) throw error;
     },
@@ -398,11 +398,11 @@ function EvidenciasTab({ pnc }: { pnc: Pnc }) {
       <div className="grid gap-2">
         {evidencias.map((ev) => (
           <div key={ev.id} className="flex items-center justify-between rounded-md border border-border p-2 text-sm">
-            <a href={ev.archivo_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-foreground hover:underline">
+            <SignedFileLink bucket="pnc-evidencias" path={ev.archivo_url} className="flex items-center gap-2 text-foreground hover:underline">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <span>{ev.nombre_archivo}</span>
               <span className="rounded border border-border px-1.5 text-xs text-muted-foreground">{ev.tipo}</span>
-            </a>
+            </SignedFileLink>
             <Button variant="ghost" size="icon" onClick={() => del.mutate(ev.id)}><Trash2 className="h-4 w-4" /></Button>
           </div>
         ))}

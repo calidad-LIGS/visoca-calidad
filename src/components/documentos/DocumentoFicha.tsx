@@ -106,16 +106,12 @@ function FichaBody({ doc, onOpenDoc }: { doc: Documento; onOpenDoc?: (id: string
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             {doc.archivo_url && (
               <>
-                <Button asChild size="sm" variant="outline">
-                  <a href={doc.archivo_url} target="_blank" rel="noreferrer">
-                    <FileText className="mr-1.5 h-4 w-4" /> Ver PDF
-                  </a>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <a href={doc.archivo_url} download>
-                    <Download className="mr-1.5 h-4 w-4" /> Descargar
-                  </a>
-                </Button>
+                <SignedFileLink bucket="documentos" path={doc.archivo_url} className={buttonVariants({ size: "sm", variant: "outline" })}>
+                  <FileText className="mr-1.5 h-4 w-4" /> Ver PDF
+                </SignedFileLink>
+                <SignedFileLink bucket="documentos" path={doc.archivo_url} download className={buttonVariants({ size: "sm", variant: "outline" })}>
+                  <Download className="mr-1.5 h-4 w-4" /> Descargar
+                </SignedFileLink>
               </>
             )}
             {doc.drive_url && (
@@ -316,7 +312,7 @@ function VersionesTab({ doc }: { doc: Documento }) {
       if (file) {
         const path = `${sanitizeSegment(doc.codigo)}/v${sanitizeSegment(version || "x")}-${Date.now()}.pdf`;
         const res = await uploadFile("documentos", path, file);
-        archivo_url = res.url;
+        archivo_url = res.path;
       }
       const { error } = await supabase.from("documentos_versiones").insert({
         documento_id: doc.id,
@@ -354,9 +350,9 @@ function VersionesTab({ doc }: { doc: Documento }) {
             </div>
             {v.notas_cambio && <p className="text-sm text-muted-foreground">{v.notas_cambio}</p>}
             {v.archivo_url && (
-              <a href={v.archivo_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
+              <SignedFileLink bucket="documentos" path={v.archivo_url} className="text-xs text-primary underline">
                 Descargar PDF
-              </a>
+              </SignedFileLink>
             )}
           </li>
         ))}

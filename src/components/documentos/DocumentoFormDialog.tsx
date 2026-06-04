@@ -92,7 +92,7 @@ export function DocumentoFormDialog({
           form.codigo ?? "doc",
         )}/${sanitizeSegment(form.version ?? "1.0")}.pdf`;
         const res = await uploadFile("documentos", path, file);
-        archivo_url = res.url;
+        archivo_url = res.path;
       }
       const payload = {
         empresa_id: form.empresa_id ?? null,
