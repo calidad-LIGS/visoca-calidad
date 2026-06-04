@@ -136,7 +136,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
   }
 }
 
-function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc: { numero_anio: string } | null }> }) {
+function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }> }) {
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const perms = usePermisos();

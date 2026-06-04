@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearch } from "@tanstack/react-router";
 import * as XLSX from "xlsx";
 import { Plus, FileDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

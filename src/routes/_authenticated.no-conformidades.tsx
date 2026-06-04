@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PncView } from "@/components/pnc/PncView";
 
 export const Route = createFileRoute("/_authenticated/no-conformidades")({
-  validateSearch: (search: Record<string, unknown>): { id?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { id?: string; pncId?: string } => ({
     id: typeof search.id === "string" ? search.id : undefined,
+    pncId: typeof search.pncId === "string" ? search.pncId : undefined,
   }),
   head: () => ({
     meta: [
