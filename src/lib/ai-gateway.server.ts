@@ -1,13 +1,13 @@
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+// ai-gateway.server.ts
+// Wrapper para Anthropic API — solo usar en server functions
+//
+// Requiere la variable de entorno ANTHROPIC_API_KEY.
+// En Lovable Cloud → Settings → Environment Variables agregar:
+//   ANTHROPIC_API_KEY = [la key real de Anthropic]
+import Anthropic from "@anthropic-ai/sdk";
 
-/**
- * Provider helper para Lovable AI Gateway.
- * Solo se debe importar desde código de servidor (server functions).
- */
-export function createLovableAiGatewayProvider(apiKey: string) {
-  return createOpenAICompatible({
-    name: "lovable-gateway",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": apiKey },
-  });
+export function createAnthropicClient() {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY no configurada en variables de entorno");
+  return new Anthropic({ apiKey });
 }

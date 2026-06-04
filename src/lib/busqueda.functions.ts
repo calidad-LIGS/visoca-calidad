@@ -20,62 +20,100 @@ export const buscarDocumentosIA = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => Input.parse(input))
   .handler(async ({ data, context }): Promise<BusquedaResultado> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("Falta LOVABLE_API_KEY");
+    const { supabase, userId } = context;
 
-    const { supabase } = context;
+    // Cargar documentos vigentes (máx 400 para no exceder contexto)
     const { data: docs, error } = await supabase
       .from("documentos")
-      .select("id, codigo, nombre, tipo, comentarios")
+      .select("id, codigo, nombre, tipo, area_id, comentarios")
       .eq("estatus", "vigente")
       .limit(400);
     if (error) throw new Error(error.message);
 
-    const catalogo = (docs ?? []).map((d) =>
-      `${d.id} | ${d.codigo} | ${d.nombre} | ${d.tipo}${d.comentarios ? ` | ${d.comentarios}` : ""}`,
-    ).join("\n");
-
-    if (!catalogo) {
-      return { resumen: "No hay documentos vigentes en el sistema.", documentos: [] };
+    if (!docs || docs.length === 0) {
+      return { resumen: "No hay documentos vigentes registrados en el sistema.", documentos: [] };
     }
 
-    const { createLovableAiGatewayProvider } = await import("@/lib/ai-gateway.server");
-    const { generateText, Output } = await import("ai");
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    // Construir catálogo como texto compacto
+    const catalogo = docs
+      .map((d) => `${d.id}|${d.codigo}|${d.nombre}|${d.tipo}${d.comentarios ? `|${d.comentarios}` : ""}`)
+      .join("\n");
 
-    const schema = z.object({
-      resumen: z.string(),
-      documentos: z.array(z.object({
-        id: z.string(),
-        codigo: z.string(),
-        nombre: z.string(),
-        motivo: z.string(),
-        relevancia: z.number().min(0).max(100),
-      })),
+    // Llamar a Anthropic API
+    const { createAnthropicClient } = await import("@/lib/ai-gateway.server");
+    const anthropic = createAnthropicClient();
+
+    const systemPrompt = `Eres el asistente de gestión documental de LIGS Group, un corporativo logístico certificado en ISO 9001:2015 y OLA/OEA.
+Tu función es ayudar al equipo de Calidad a encontrar el documento, proceso o política correcto según su consulta.
+Recibes un catálogo de documentos en formato: id|código|nombre|tipo|comentarios
+
+RESPONDE EXCLUSIVAMENTE con un objeto JSON válido (sin markdown, sin backticks, sin texto extra) con esta estructura exacta:
+{
+  "resumen": "Una frase que explique qué encontraste o por qué algo no existe",
+  "documentos": [
+    {
+      "id": "uuid-exacto-del-catalogo",
+      "codigo": "codigo-exacto",
+      "nombre": "nombre-exacto",
+      "motivo": "Por qué este documento responde la consulta (1 frase)",
+      "relevancia": 85
+    }
+  ]
+}
+
+Reglas:
+- Máximo 8 documentos, ordenados por relevancia descendente (0-100)
+- Usa SOLO ids y códigos que existen en el catálogo — nunca inventes
+- Si nada es relevante, devuelve documentos: []
+- Escribe en español`;
+
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1500,
+      messages: [
+        {
+          role: "user",
+          content: `Catálogo de documentos vigentes:\n${catalogo}\n\nConsulta: "${data.query}"`,
+        },
+      ],
+      system: systemPrompt,
     });
 
-    const { experimental_output } = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
-      experimental_output: Output.object({ schema }),
-      system:
-        "Eres un asistente del sistema de gestión de calidad de LIGS Group. " +
-        "Recibes un catálogo de documentos vigentes (id | código | nombre | tipo | comentarios) y una consulta en lenguaje natural. " +
-        "Devuelve únicamente los documentos relevantes (máximo 8), ordenados por relevancia descendente, usando los id y código exactos del catálogo. " +
-        "El campo 'motivo' explica en una frase por qué es relevante. Escribe en español. Si nada es relevante, devuelve un arreglo vacío.",
-      prompt: `Catálogo de documentos:\n${catalogo}\n\nConsulta del usuario: "${data.query}"`,
-    });
+    // Parsear respuesta
+    const rawText = message.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { type: "text"; text: string }).text)
+      .join("");
 
-    const out = experimental_output as z.infer<typeof schema>;
-    // Asegurar que solo se devuelvan ids existentes
-    const validIds = new Set((docs ?? []).map((d) => d.id));
-    out.documentos = out.documentos.filter((d) => validIds.has(d.id)).slice(0, 8);
+    let parsed: BusquedaResultado;
+    try {
+      // Limpiar posibles backticks si el modelo los incluyó de todas formas
+      const clean = rawText.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      console.error("[BuscadorIA] Parse error:", rawText);
+      return {
+        resumen: "No pude procesar la respuesta de IA. Intenta de nuevo.",
+        documentos: [],
+      };
+    }
 
-    // Guardar historial (no bloqueante)
-    await supabase.from("busquedas_ia").insert({
-      query: data.query,
-      resultado_json: JSON.parse(JSON.stringify(out)),
-      usuario_id: context.userId,
-    });
+    // Validar que los ids existen en el catálogo (evitar alucinaciones)
+    const validIds = new Set(docs.map((d) => d.id));
+    parsed.documentos = (parsed.documentos ?? [])
+      .filter((d) => validIds.has(d.id))
+      .slice(0, 8);
 
-    return out;
+    // Guardar historial (fallo silencioso)
+    try {
+      await supabase.from("busquedas_ia").insert({
+        query: data.query,
+        resultado_json: JSON.parse(JSON.stringify(parsed)),
+        usuario_id: userId,
+      });
+    } catch {
+      // ignorar errores de historial
+    }
+
+    return parsed;
   });
