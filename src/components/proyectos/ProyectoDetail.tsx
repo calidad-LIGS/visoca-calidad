@@ -63,6 +63,7 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
   const { data: areas = [] } = useAreas();
   const [nuevaAct, setNuevaAct] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [vistaActs, setVistaActs] = useState<"lista" | "gantt">("lista");
 
   const { data: actividades = [] } = useQuery({
     queryKey: ["actividades", proyecto.id],
