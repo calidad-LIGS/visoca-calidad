@@ -246,6 +246,121 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
   );
 }
 
+const DAY = 86400000;
+
+function ActividadesGantt({ actividades }: { actividades: Actividad[] }) {
+  const rows = actividades.filter((a) => a.fecha_inicio_plan && a.fecha_fin_plan);
+  const sinFechas = actividades.length - rows.length;
+
+  const { min, max, months } = useMemo(() => {
+    if (rows.length === 0) return { min: 0, max: 0, months: [] as { label: string; offset: number; width: number }[] };
+    const starts = rows.map((a) => new Date(a.fecha_inicio_plan!).getTime());
+    const ends = rows.map((a) => new Date(a.fecha_fin_plan!).getTime());
+    const reales = actividades.flatMap((a) => [
+      a.fecha_inicio_real ? new Date(a.fecha_inicio_real).getTime() : null,
+      a.fecha_fin_real ? new Date(a.fecha_fin_real).getTime() : null,
+    ]).filter((v): v is number => v !== null);
+    const min = Math.min(...starts, ...reales);
+    const max = Math.max(...ends, ...reales);
+    const total = Math.max(max - min, DAY);
+    const months: { label: string; offset: number; width: number }[] = [];
+    const cur = new Date(min);
+    cur.setDate(1);
+    while (cur.getTime() <= max) {
+      const start = Math.max(cur.getTime(), min);
+      const next = new Date(cur.getFullYear(), cur.getMonth() + 1, 1).getTime();
+      const end = Math.min(next, max);
+      months.push({
+        label: cur.toLocaleDateString("es", { month: "short", year: "2-digit" }),
+        offset: ((start - min) / total) * 100,
+        width: ((end - start) / total) * 100,
+      });
+      cur.setMonth(cur.getMonth() + 1);
+    }
+    return { min, max, months };
+  }, [rows, actividades]);
+
+  if (rows.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
+        No hay actividades con fechas de inicio y fin planificadas para mostrar el Gantt.
+      </p>
+    );
+  }
+
+  const total = Math.max(max - min, DAY);
+  const hoy = Date.now();
+  const hoyPct = hoy >= min && hoy <= max ? ((hoy - min) / total) * 100 : null;
+
+  return (
+    <>
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <div className="min-w-[640px]">
+          <div className="flex border-b border-border bg-elevated text-xs text-muted-foreground">
+            <div className="w-44 shrink-0 px-3 py-2 font-semibold uppercase tracking-wider">Actividad</div>
+            <div className="relative flex-1">
+              {months.map((m, i) => (
+                <div key={i} className="absolute top-0 h-full border-l border-border/60 px-1 py-2"
+                  style={{ left: `${m.offset}%`, width: `${m.width}%` }}>
+                  {m.label}
+                </div>
+              ))}
+              <div className="py-2">&nbsp;</div>
+            </div>
+          </div>
+          {rows.map((a) => {
+            const start = new Date(a.fecha_inicio_plan!).getTime();
+            const end = new Date(a.fecha_fin_plan!).getTime();
+            const offset = ((start - min) / total) * 100;
+            const width = Math.max(((end - start) / total) * 100, 1.5);
+            const avance = Math.round(a.avance ?? 0);
+            const cfg = PROY_ESTATUS[a.estatus];
+            const barColor = cfg?.style.backgroundColor ?? "#3B7DD8";
+            const hasReal = a.fecha_inicio_real && a.fecha_fin_real;
+            const realStart = hasReal ? new Date(a.fecha_inicio_real!).getTime() : 0;
+            const realEnd = hasReal ? new Date(a.fecha_fin_real!).getTime() : 0;
+            const realOffset = hasReal ? ((realStart - min) / total) * 100 : 0;
+            const realWidth = hasReal ? Math.max(((realEnd - realStart) / total) * 100, 1.5) : 0;
+            return (
+              <div key={a.id} className="flex items-stretch border-b border-border/60 hover:bg-card/50">
+                <div className="w-44 shrink-0 px-3 py-2">
+                  <p className="truncate text-sm text-foreground">{a.nombre}</p>
+                  <p className="truncate text-xs text-muted-foreground">{a.responsable_nombre ?? "—"}</p>
+                </div>
+                <div className="relative flex-1" style={{ minHeight: hasReal ? "2.75rem" : "2.25rem" }}>
+                  {hoyPct !== null && (
+                    <div className="absolute top-0 z-10 h-full w-px" style={{ left: `${hoyPct}%`, backgroundColor: "#E54B4B" }} />
+                  )}
+                  <div
+                    className="absolute top-1.5 h-5 overflow-hidden rounded"
+                    style={{ left: `${offset}%`, width: `${width}%`, backgroundColor: "#2E3347" }}
+                    title={`${a.nombre} · ${a.responsable_nombre ?? "—"}\nPlan: ${a.fecha_inicio_plan} → ${a.fecha_fin_plan}${hasReal ? `\nReal: ${a.fecha_inicio_real} → ${a.fecha_fin_real}` : ""}\nAvance: ${avance}%`}
+                  >
+                    <span className="block h-full" style={{ width: `${avance}%`, backgroundColor: barColor, opacity: 0.85 }} />
+                  </div>
+                  {hasReal && (
+                    <div
+                      className="absolute top-7 h-3 rounded"
+                      style={{ left: `${realOffset}%`, width: `${realWidth}%`, backgroundColor: barColor, filter: "brightness(0.6)" }}
+                      title={`Real: ${a.fecha_inicio_real} → ${a.fecha_fin_real}`}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      {sinFechas > 0 && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {sinFechas} {sinFechas === 1 ? "actividad sin fechas planificadas no se muestra" : "actividades sin fechas planificadas no se muestran"} en Gantt.
+        </p>
+      )}
+    </>
+  );
+}
+
+
 function ActividadRow({
   act, editable, expanded, onToggleExpand, onUpdate, onDelete, onToggleCal,
 }: {
