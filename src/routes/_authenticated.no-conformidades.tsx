@@ -2,6 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PncView } from "@/components/pnc/PncView";
 
 export const Route = createFileRoute("/_authenticated/no-conformidades")({
+  validateSearch: (search: Record<string, unknown>): { id?: string } => ({
+    id: typeof search.id === "string" ? search.id : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "No Conformidades — VISOCA-Calidad" },
