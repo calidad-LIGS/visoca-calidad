@@ -104,16 +104,16 @@ Reglas:
       .filter((d) => validIds.has(d.id))
       .slice(0, 8);
 
-    // Guardar historial (no bloqueante, fallo silencioso)
-    supabase
-      .from("busquedas_ia")
-      .insert({
+    // Guardar historial (fallo silencioso)
+    try {
+      await supabase.from("busquedas_ia").insert({
         query: data.query,
-        resultado_json: parsed as unknown as Record<string, unknown>,
+        resultado_json: JSON.parse(JSON.stringify(parsed)),
         usuario_id: userId,
-      })
-      .then(() => {})
-      .catch(() => {});
+      });
+    } catch {
+      // ignorar errores de historial
+    }
 
     return parsed;
   });
