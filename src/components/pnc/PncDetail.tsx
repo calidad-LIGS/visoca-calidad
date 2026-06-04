@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { usePermisos } from "@/lib/permisos";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
+import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { diasInfo } from "@/lib/pncUtils";
 import { deleteEvento } from "@/lib/calendarSync";
 import {
