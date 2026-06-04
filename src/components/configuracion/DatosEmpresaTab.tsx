@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Upload, Building2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { uploadFile, sanitizeSegment } from "@/lib/storage";
+import { uploadFile, sanitizeSegment, getPublicUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,8 +68,8 @@ export function DatosEmpresaTab() {
     if (!file) return;
     setUploading(true);
     try {
-      const { url } = await uploadFile("org-assets", `logo/${Date.now()}_${sanitizeSegment(file.name)}`, file);
-      await save.mutateAsync({ logo_url: url });
+      const { path } = await uploadFile("org-assets", `logo/${Date.now()}_${sanitizeSegment(file.name)}`, file);
+      await save.mutateAsync({ logo_url: getPublicUrl("org-assets", path) });
     } catch (err) {
       toast.error((err as Error).message);
     } finally {

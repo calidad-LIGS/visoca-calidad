@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEmpresas, useAreas, useCargos } from "@/hooks/useCatalogos";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
+import { SignedFileLink } from "@/components/common/SignedFileLink";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +15,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -106,16 +108,12 @@ function FichaBody({ doc, onOpenDoc }: { doc: Documento; onOpenDoc?: (id: string
           <div className="flex flex-wrap gap-2 border-t border-border pt-4">
             {doc.archivo_url && (
               <>
-                <Button asChild size="sm" variant="outline">
-                  <a href={doc.archivo_url} target="_blank" rel="noreferrer">
-                    <FileText className="mr-1.5 h-4 w-4" /> Ver PDF
-                  </a>
-                </Button>
-                <Button asChild size="sm" variant="outline">
-                  <a href={doc.archivo_url} download>
-                    <Download className="mr-1.5 h-4 w-4" /> Descargar
-                  </a>
-                </Button>
+                <SignedFileLink bucket="documentos" path={doc.archivo_url} className={buttonVariants({ size: "sm", variant: "outline" })}>
+                  <FileText className="mr-1.5 h-4 w-4" /> Ver PDF
+                </SignedFileLink>
+                <SignedFileLink bucket="documentos" path={doc.archivo_url} download className={buttonVariants({ size: "sm", variant: "outline" })}>
+                  <Download className="mr-1.5 h-4 w-4" /> Descargar
+                </SignedFileLink>
               </>
             )}
             {doc.drive_url && (
@@ -316,7 +314,7 @@ function VersionesTab({ doc }: { doc: Documento }) {
       if (file) {
         const path = `${sanitizeSegment(doc.codigo)}/v${sanitizeSegment(version || "x")}-${Date.now()}.pdf`;
         const res = await uploadFile("documentos", path, file);
-        archivo_url = res.url;
+        archivo_url = res.path;
       }
       const { error } = await supabase.from("documentos_versiones").insert({
         documento_id: doc.id,
@@ -354,9 +352,9 @@ function VersionesTab({ doc }: { doc: Documento }) {
             </div>
             {v.notas_cambio && <p className="text-sm text-muted-foreground">{v.notas_cambio}</p>}
             {v.archivo_url && (
-              <a href={v.archivo_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline">
+              <SignedFileLink bucket="documentos" path={v.archivo_url} className="text-xs text-primary underline">
                 Descargar PDF
-              </a>
+              </SignedFileLink>
             )}
           </li>
         ))}

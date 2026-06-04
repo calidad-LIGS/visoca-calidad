@@ -11,8 +11,9 @@ import { usePermisos } from "@/lib/permisos";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { crearHallazgoConPnc } from "@/lib/auditoriaUtils";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
+import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { generarActaBlob, type ActaData } from "./ActaPdf";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -258,7 +259,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       const { error } = await supabase.from("auditoria_actas").insert({
         auditoria_id: aud.id as string, departamento, responsable_nombre: responsable,
         fecha_acta: data.fecha, contenido_json: JSON.parse(JSON.stringify(data)),
-        pdf_url: res.url, generado_por: perfil?.id ?? null,
+        pdf_url: res.path, generado_por: perfil?.id ?? null,
       });
       if (error) throw error;
       await supabase.from("auditorias").update({ estatus: "en_seguimiento" }).eq("id", aud.id as string);
@@ -284,7 +285,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
         )}
       </div>
       {acta?.pdf_url ? (
-        <Button asChild size="sm"><a href={acta.pdf_url as string} target="_blank" rel="noreferrer"><Download className="mr-1.5 h-4 w-4" /> Descargar PDF</a></Button>
+        <SignedFileLink bucket="auditorias" path={acta.pdf_url as string} className={buttonVariants({ size: "sm" })}><Download className="mr-1.5 h-4 w-4" /> Descargar PDF</SignedFileLink>
       ) : (
         <p className="text-sm text-muted-foreground">Aún no se ha generado el acta de resultados.</p>
       )}
