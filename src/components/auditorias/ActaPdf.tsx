@@ -1,5 +1,5 @@
 import {
-  Document, Page, Text, View, StyleSheet, pdf,
+  Document, Page, Text, View, Image, StyleSheet, pdf,
 } from "@react-pdf/renderer";
 
 const C = {
@@ -40,6 +40,8 @@ export interface ActaData {
   descripcion: string;
   aplicacion: string;
   version: string;
+  orgNombre: string;
+  orgLogoUrl: string | null;
   hallazgos: {
     tipo: string; descripcion: string; responsable: string;
     compromiso: string; fechaCompromiso: string; estatus: string;
@@ -56,7 +58,11 @@ export function ActaDocument({ d }: { d: ActaData }) {
       <Page size="A4" style={s.page}>
         <View style={s.headerBox}>
           <View style={s.headerTop}>
-            <Text style={s.logo}>LIGS GROUP</Text>
+            {d.orgLogoUrl ? (
+              <Image src={d.orgLogoUrl} style={{ width: 60, height: 30, objectFit: "contain" }} />
+            ) : (
+              <Text style={s.logo}>{d.orgNombre.toUpperCase()}</Text>
+            )}
             <Text>Acta de Resultados de Auditoría</Text>
           </View>
           <View style={s.metaRow}>
