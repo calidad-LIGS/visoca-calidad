@@ -181,6 +181,22 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
             <h3 className="font-display text-sm font-semibold text-foreground">
               Actividades ({actividades.length})
             </h3>
+            <div className="flex items-center gap-1 rounded-md border border-border bg-card p-0.5">
+              <button
+                onClick={() => setVistaActs("lista")}
+                title="Vista lista"
+                className={`flex h-6 w-6 items-center justify-center rounded ${vistaActs === "lista" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setVistaActs("gantt")}
+                title="Vista Gantt"
+                className={`flex h-6 w-6 items-center justify-center rounded ${vistaActs === "gantt" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                <BarChart2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           {perms.editarProyecto && (
