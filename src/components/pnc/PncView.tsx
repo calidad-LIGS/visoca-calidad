@@ -31,6 +31,12 @@ export function PncView() {
   const [fEmpresa, setFEmpresa] = useState("all");
   const [fOrigen, setFOrigen] = useState("all");
 
+  const { pncId } = useSearch({ from: "/_authenticated/no-conformidades" });
+
+  useEffect(() => {
+    if (pncId) setDetailId(pncId);
+  }, [pncId]);
+
   const { data: pncs = [], isLoading } = useQuery({
     queryKey: ["pnc"],
     queryFn: async () => {
