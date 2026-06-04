@@ -27,6 +27,8 @@ interface Actividad {
   responsable_nombre: string | null;
   fecha_inicio_plan: string | null;
   fecha_fin_plan: string | null;
+  fecha_inicio_real: string | null;
+  fecha_fin_real: string | null;
   orden: number | null;
   agregar_calendario: boolean | null;
 }
