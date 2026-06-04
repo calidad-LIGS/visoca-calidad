@@ -50,7 +50,17 @@ export function DocumentosView() {
     queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, search, page],
     queryFn: async () => {
       let q = supabase.from("documentos").select(DOC_COLS);
-      q = applyFilters(q, tab, fEmpresa, fArea, fTipo, search);
+      if (tab === "vigentes") q = q.eq("estatus", "vigente");
+      else if (tab === "revision") q = q.eq("estatus", "en_revision");
+      else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
+      if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
+      if (fArea !== "all") q = q.eq("area_id", fArea);
+      if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      const s = search.trim();
+      if (s) {
+        const safe = s.replace(/[%,()]/g, " ");
+        q = q.or(`codigo.ilike.%${safe}%,nombre.ilike.%${safe}%,comentarios.ilike.%${safe}%`);
+      }
       const { data, error } = await q
         .order("codigo")
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
