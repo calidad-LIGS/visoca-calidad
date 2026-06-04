@@ -20,7 +20,6 @@ import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authen
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated.calendario'
 import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authenticated.auditorias'
 import { Route as ApiPublicEnsureBucketsRouteImport } from './routes/api/public/ensure-buckets'
-import { Route as ApiPublicBootstrapRouteImport } from './routes/api/public/bootstrap'
 import { Route as AuthenticatedDocumentosRedRouteImport } from './routes/_authenticated.documentos.red'
 import { Route as AuthenticatedAuditoriasIdRouteImport } from './routes/_authenticated.auditorias.$id'
 
@@ -80,11 +79,6 @@ const ApiPublicEnsureBucketsRoute = ApiPublicEnsureBucketsRouteImport.update({
   path: '/api/public/ensure-buckets',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBootstrapRoute = ApiPublicBootstrapRouteImport.update({
-  id: '/api/public/bootstrap',
-  path: '/api/public/bootstrap',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedDocumentosRedRoute =
   AuthenticatedDocumentosRedRouteImport.update({
     id: '/red',
@@ -110,7 +104,6 @@ export interface FileRoutesByFullPath {
   '/proyectos': typeof AuthenticatedProyectosRoute
   '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
-  '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
 }
 export interface FileRoutesByTo {
@@ -125,7 +118,6 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
-  '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
 }
 export interface FileRoutesById {
@@ -142,7 +134,6 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/_authenticated/documentos/red': typeof AuthenticatedDocumentosRedRoute
-  '/api/public/bootstrap': typeof ApiPublicBootstrapRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
 }
 export interface FileRouteTypes {
@@ -159,7 +150,6 @@ export interface FileRouteTypes {
     | '/proyectos'
     | '/auditorias/$id'
     | '/documentos/red'
-    | '/api/public/bootstrap'
     | '/api/public/ensure-buckets'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -174,7 +164,6 @@ export interface FileRouteTypes {
     | '/'
     | '/auditorias/$id'
     | '/documentos/red'
-    | '/api/public/bootstrap'
     | '/api/public/ensure-buckets'
   id:
     | '__root__'
@@ -190,7 +179,6 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/auditorias/$id'
     | '/_authenticated/documentos/red'
-    | '/api/public/bootstrap'
     | '/api/public/ensure-buckets'
   fileRoutesById: FileRoutesById
 }
@@ -198,7 +186,6 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ApiPublicBootstrapRoute: typeof ApiPublicBootstrapRoute
   ApiPublicEnsureBucketsRoute: typeof ApiPublicEnsureBucketsRoute
 }
 
@@ -281,13 +268,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicEnsureBucketsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/bootstrap': {
-      id: '/api/public/bootstrap'
-      path: '/api/public/bootstrap'
-      fullPath: '/api/public/bootstrap'
-      preLoaderRoute: typeof ApiPublicBootstrapRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/documentos/red': {
       id: '/_authenticated/documentos/red'
       path: '/red'
@@ -361,7 +341,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ApiPublicBootstrapRoute: ApiPublicBootstrapRoute,
   ApiPublicEnsureBucketsRoute: ApiPublicEnsureBucketsRoute,
 }
 export const routeTree = rootRouteImport
