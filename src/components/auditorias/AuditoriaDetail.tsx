@@ -234,6 +234,15 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const [descripcion, setDescripcion] = useState("");
   const [generating, setGenerating] = useState(false);
 
+  const { data: orgConfig } = useQuery({
+    queryKey: ["org_config"],
+    queryFn: async () => {
+      const { data } = await supabase.from("org_config").select("*").limit(1).maybeSingle();
+      return data;
+    },
+    staleTime: 300_000, // 5 minutos — cambia poco
+  });
+
   const generar = async () => {
     setGenerating(true);
     try {
@@ -245,6 +254,8 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
         descripcion,
         aplicacion: APLICACION_LABEL["iso_ola"],
         version: "1.0",
+        orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
+        orgLogoUrl: orgConfig?.logo_url ?? null,
         hallazgos: hallazgos.map((h) => ({
           tipo: h.tipo, descripcion: h.descripcion,
           responsable: h.responsable_nombre ?? responsable,
