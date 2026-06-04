@@ -213,29 +213,33 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
             </div>
           )}
 
-          <div className="space-y-2">
-            {actividades.map((act) => (
-              <ActividadRow
-                key={act.id}
-                act={act}
-                editable={perms.editarProyecto}
-                expanded={expanded.has(act.id)}
-                onToggleExpand={() => setExpanded((s) => {
-                  const n = new Set(s);
-                  n.has(act.id) ? n.delete(act.id) : n.add(act.id);
-                  return n;
-                })}
-                onUpdate={(patch) => updateAct.mutate({ id: act.id, patch })}
-                onDelete={() => delAct.mutate(act.id)}
-                onToggleCal={() => toggleCal.mutate(act)}
-              />
-            ))}
-            {actividades.length === 0 && (
-              <p className="rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                Sin actividades aún.
-              </p>
-            )}
-          </div>
+          {vistaActs === "gantt" ? (
+            <ActividadesGantt actividades={actividades} />
+          ) : (
+            <div className="space-y-2">
+              {actividades.map((act) => (
+                <ActividadRow
+                  key={act.id}
+                  act={act}
+                  editable={perms.editarProyecto}
+                  expanded={expanded.has(act.id)}
+                  onToggleExpand={() => setExpanded((s) => {
+                    const n = new Set(s);
+                    n.has(act.id) ? n.delete(act.id) : n.add(act.id);
+                    return n;
+                  })}
+                  onUpdate={(patch) => updateAct.mutate({ id: act.id, patch })}
+                  onDelete={() => delAct.mutate(act.id)}
+                  onToggleCal={() => toggleCal.mutate(act)}
+                />
+              ))}
+              {actividades.length === 0 && (
+                <p className="rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+                  Sin actividades aún.
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
