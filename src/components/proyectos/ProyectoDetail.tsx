@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, ChevronDown, ChevronRight, CalendarPlus } from "lucide-react";
+import { Plus, Trash2, Check, ChevronDown, ChevronRight, CalendarPlus, List, BarChart2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { usePermisos } from "@/lib/permisos";
