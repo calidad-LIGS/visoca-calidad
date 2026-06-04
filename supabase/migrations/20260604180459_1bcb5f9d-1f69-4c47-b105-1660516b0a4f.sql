@@ -1,0 +1,1 @@
+ALTER TABLE public.eventos_calendario ADD COLUMN IF NOT EXISTS invitados_email text[] NOT NULL DEFAULT '{}';
