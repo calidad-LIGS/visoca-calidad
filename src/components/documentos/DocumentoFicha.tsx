@@ -14,6 +14,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { Input } from "@/components/ui/input";
@@ -53,9 +55,16 @@ export function DocumentoFicha({
   onOpenDoc?: (id: string) => void;
 }) {
   const open = !!doc;
+  const isMobile = useIsMobile();
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-[600px]">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(
+          "overflow-y-auto",
+          isMobile ? "h-[90vh]" : "w-full sm:max-w-[600px]",
+        )}
+      >
         {doc && <FichaBody doc={doc} onOpenDoc={onOpenDoc} />}
       </SheetContent>
     </Sheet>

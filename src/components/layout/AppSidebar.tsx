@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -46,9 +47,15 @@ function initials(name: string) {
 export function AppSidebar({
   collapsed,
   onToggle,
+  isMobile = false,
+  isMobileOpen = false,
+  onMobileClose,
 }: {
   collapsed: boolean;
   onToggle: () => void;
+  isMobile?: boolean;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }) {
   const { perfil, roles, isGerente, signOut } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -56,20 +63,39 @@ export function AppSidebar({
   const items = NAV.filter((i) => !i.gerenteOnly || isGerente);
   const roleLabel = roles[0] ? ROLE_LABELS[roles[0]] : "—";
 
-  return (
+  // On mobile the sidebar is always full-width (never visually collapsed).
+  const isCollapsed = isMobile ? false : collapsed;
+
+  // On mobile, when the drawer is closed, render nothing in the layout flow.
+  if (isMobile && !isMobileOpen) return null;
+
+  const aside = (
     <aside
       className={cn(
         "flex h-screen flex-col border-r border-sidebar-border bg-sidebar transition-all duration-200",
-        collapsed ? "w-16" : "w-60",
+        isMobile
+          ? "fixed inset-y-0 left-0 z-50 w-64 shadow-xl"
+          : isCollapsed
+            ? "w-16"
+            : "w-60",
       )}
     >
       {/* Logo */}
       <div className="flex h-16 items-center gap-2 px-4">
         <Shield className="h-7 w-7 shrink-0 text-primary" />
-        {!collapsed && (
+        {!isCollapsed && (
           <span className="font-display text-lg font-bold tracking-tight text-foreground">
             VISOCA<span className="text-primary">-Calidad</span>
           </span>
+        )}
+        {isMobile && (
+          <button
+            onClick={onMobileClose}
+            className="ml-auto rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+            aria-label="Cerrar menú"
+          >
+            <X className="h-5 w-5" />
+          </button>
         )}
       </div>
 
@@ -85,19 +111,20 @@ export function AppSidebar({
             <Link
               key={item.to}
               to={item.to}
+              onClick={isMobile ? onMobileClose : undefined}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                collapsed && "justify-center px-0",
+                isCollapsed && "justify-center px-0",
                 active
                   ? "border-l-[3px] border-primary bg-card text-foreground"
                   : "border-l-[3px] border-transparent text-sidebar-foreground hover:bg-card hover:text-foreground",
               )}
             >
               <Icon className="h-5 w-5 shrink-0" />
-              {!collapsed && <span className="truncate">{item.label}</span>}
+              {!isCollapsed && <span className="truncate">{item.label}</span>}
             </Link>
           );
-          return collapsed ? (
+          return isCollapsed ? (
             <Tooltip key={item.to} delayDuration={0}>
               <TooltipTrigger asChild>{link}</TooltipTrigger>
               <TooltipContent side="right">{item.label}</TooltipContent>
@@ -113,13 +140,13 @@ export function AppSidebar({
         <div
           className={cn(
             "flex items-center gap-3 rounded-md px-2 py-2",
-            collapsed && "justify-center px-0",
+            isCollapsed && "justify-center px-0",
           )}
         >
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary">
             {perfil ? initials(perfil.nombre_completo) : "··"}
           </div>
-          {!collapsed && (
+          {!isCollapsed && (
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">
                 {perfil?.nombre_completo ?? "Usuario"}
@@ -127,7 +154,7 @@ export function AppSidebar({
               <p className="truncate text-xs text-muted-foreground">{roleLabel}</p>
             </div>
           )}
-          {!collapsed && (
+          {!isCollapsed && (
             <button
               onClick={() => signOut()}
               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-card hover:text-destructive"
@@ -138,20 +165,37 @@ export function AppSidebar({
           )}
         </div>
 
-        <button
-          onClick={onToggle}
-          className="mt-1 flex w-full items-center justify-center gap-2 rounded-md py-2 text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4" />
-              <span className="text-xs">Colapsar</span>
-            </>
-          )}
-        </button>
+        {!isMobile && (
+          <button
+            onClick={onToggle}
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-md py-2 text-muted-foreground transition-colors hover:bg-card hover:text-foreground"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span className="text-xs">Colapsar</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     </aside>
   );
+
+  if (isMobile) {
+    return (
+      <>
+        <div
+          className="fixed inset-0 z-40 bg-black/60"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+        {aside}
+      </>
+    );
+  }
+
+  return aside;
 }
