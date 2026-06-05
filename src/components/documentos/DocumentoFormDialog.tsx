@@ -196,7 +196,7 @@ export function DocumentoFormDialog({
           <Field label="Versión">
             <Input value={form.version ?? ""} onChange={(e) => set("version", e.target.value)} />
           </Field>
-          <Field label="Fecha últ. edición">
+          <Field label="Fecha última revisión">
             <Input
               type="date"
               value={form.fecha_ultima_edicion?.slice(0, 10) ?? ""}
@@ -206,24 +206,39 @@ export function DocumentoFormDialog({
           <Field label="Estatus">
             <Sel value={form.estatus} onChange={(v) => set("estatus", v)} options={ESTATUS} />
           </Field>
-          <Field label="Origen">
-            <Sel value={form.origen ?? undefined} onChange={(v) => set("origen", v)} options={ORIGENES} />
+          <Field label="Nivel">
+            <Select
+              value={form.nivel ? String(form.nivel) : undefined}
+              onValueChange={(v) => set("nivel", Number(v))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona…" />
+              </SelectTrigger>
+              <SelectContent>
+                {NIVELES.map((n) => (
+                  <SelectItem key={n.value} value={String(n.value)}>
+                    {n.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
-          <Field label="Nivel (1-5)">
-            <Input
-              type="number"
-              min={1}
-              max={5}
-              value={form.nivel ?? 3}
-              onChange={(e) => set("nivel", Number(e.target.value))}
-            />
-          </Field>
-          <Field label="Aplicación">
-            <Sel
-              value={form.aplicacion ?? undefined}
-              onChange={(v) => set("aplicacion", v)}
-              options={APLICACIONES}
-            />
+          <Field label="Aplicación" full>
+            <div className="flex flex-wrap gap-3">
+              {APLICACIONES_OPTS.map((opt) => (
+                <label key={opt.value} className="flex cursor-pointer items-center gap-2">
+                  <Checkbox
+                    checked={aplicaciones.includes(opt.value)}
+                    onCheckedChange={(checked) =>
+                      setAplicaciones((prev) =>
+                        checked ? [...prev, opt.value] : prev.filter((x) => x !== opt.value),
+                      )
+                    }
+                  />
+                  <span className="text-sm">{opt.label}</span>
+                </label>
+              ))}
+            </div>
           </Field>
           <Field label="Comentarios" full>
             <Textarea
