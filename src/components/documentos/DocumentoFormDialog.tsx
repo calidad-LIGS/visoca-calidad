@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface Documento {
   id: string;
@@ -37,15 +38,32 @@ export interface Documento {
   origen: string | null;
   nivel: number | null;
   aplicacion: string | null;
+  aplicacion_arr: string[] | null;
   comentarios: string | null;
   archivo_url: string | null;
   drive_url: string | null;
 }
 
 const TIPOS = ["politica", "proceso", "manual", "formato", "acta"];
-const ESTATUS = ["vigente", "en_revision", "sustituido", "eliminado"];
-const ORIGENES = ["iso", "interno"];
-const APLICACIONES = ["iso", "ola_oea", "interno", "iso_ola"];
+const ESTATUS = ["vigente", "sustituido", "eliminado"];
+
+const NIVELES = [
+  { value: 1, label: "N1 — Política" },
+  { value: 2, label: "N2 — Manual" },
+  { value: 3, label: "N3 — Proceso" },
+  { value: 4, label: "N4 — Formato" },
+  { value: 5, label: "N5 — Acta" },
+];
+
+const TIPO_NIVEL: Record<string, number> = {
+  politica: 1, manual: 2, proceso: 3, formato: 4, acta: 5,
+};
+
+const APLICACIONES_OPTS = [
+  { value: "iso_9001", label: "ISO 9001:2015" },
+  { value: "ola_oea", label: "OLA/OEA" },
+  { value: "interno", label: "Interno" },
+];
 
 export function DocumentoFormDialog({
   open,
