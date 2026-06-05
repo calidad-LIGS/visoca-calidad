@@ -51,9 +51,16 @@ const NEXT_STATES: Record<string, { value: string; label: string }[]> = {
 export function PncDetail({
   pncId, onClose,
 }: { pncId: string | null; onClose: () => void }) {
+  const isMobile = useIsMobile();
   return (
     <Sheet open={!!pncId} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-[700px]">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(
+          "overflow-y-auto",
+          isMobile ? "h-[90vh]" : "w-full sm:max-w-[700px]",
+        )}
+      >
         {pncId && <Body pncId={pncId} />}
       </SheetContent>
     </Sheet>
