@@ -151,6 +151,22 @@ export function PncView() {
         <Filt value={fOrigen} onChange={setFOrigen} placeholder="Origen" options={Object.entries(PNC_ORIGEN_LABEL).map(([value, label]) => ({ value, label }))} />
       </div>
 
+      <div className="mb-4">
+        {hasFilters ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{total} resultados</span>
+            <button
+              onClick={() => { setFEstatus("all"); setFEmpresa("all"); setFOrigen("all"); setPage(0); }}
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              <X className="h-3 w-3" /> Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{total} registros</span>
+        )}
+      </div>
+
       {!isLoading && total === 0 && !hasFilters ? (
         <EmptyState title="Sin no conformidades registradas" description="¡Eso es una buena señal!"
           action={perms.crearPnc && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nuevo PNC</Button>} />
