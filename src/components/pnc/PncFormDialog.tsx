@@ -123,7 +123,7 @@ export function PncFormDialog({
         await upsertEvento({
           tipo: "pnc", titulo: `${numero}: ${descripcion.slice(0, 40)}`,
           descripcion, fecha_inicio: fechaCompromiso, referencia_id: data.id,
-          referencia_tabla: "pnc", empresa_id: empresa || null, area_id: area || null,
+          referencia_tabla: "pnc", empresa_id: empresa || null, area_id: areaIds[0] || null,
         });
       }
       return numero;
