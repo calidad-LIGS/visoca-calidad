@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEmpresas, useAreas, useUsuarios } from "@/hooks/useCatalogos";
@@ -12,6 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -24,6 +30,7 @@ export interface Proyecto {
   proceso_perteneciente: string | null;
   empresa_id: string | null;
   area_id: string | null;
+  area_ids: string[] | null;
   responsable_usuario_id: string | null;
   responsable_nombre: string | null;
   estatus: string;
@@ -60,9 +67,8 @@ export function ProyectoFormDialog({
   const [tipo, setTipo] = useState("implementacion");
   const [proceso, setProceso] = useState("");
   const [empresa, setEmpresa] = useState("");
-  const [area, setArea] = useState("");
+  const [areaIds, setAreaIds] = useState<string[]>([]);
   const [responsable, setResponsable] = useState("");
-  const [estatus, setEstatus] = useState("pendiente");
   const [altaPrioridad, setAltaPrioridad] = useState(false);
   const [fInicio, setFInicio] = useState("");
   const [fFin, setFFin] = useState("");
@@ -75,9 +81,8 @@ export function ProyectoFormDialog({
     setTipo(editing?.tipo ?? "implementacion");
     setProceso(editing?.proceso_perteneciente ?? "");
     setEmpresa(editing?.empresa_id ?? "");
-    setArea(editing?.area_id ?? "");
+    setAreaIds(editing?.area_ids ?? []);
     setResponsable(editing?.responsable_usuario_id ?? "");
-    setEstatus(editing?.estatus ?? "pendiente");
     setAltaPrioridad(editing?.alta_prioridad ?? false);
     setFInicio(editing?.fecha_inicio_plan ?? "");
     setFFin(editing?.fecha_fin_plan ?? "");
@@ -93,22 +98,22 @@ export function ProyectoFormDialog({
         tipo,
         proceso_perteneciente: proceso || null,
         empresa_id: empresa || null,
-        area_id: area || null,
+        area_ids: areaIds,
         responsable_usuario_id: responsable || null,
         responsable_nombre: respNombre,
-        estatus,
         alta_prioridad: altaPrioridad,
         fecha_inicio_plan: fInicio || null,
         fecha_fin_plan: fFin || null,
         nota_observacion: nota || null,
       };
       if (editing) {
+        // El estatus no se modifica desde este formulario (se cambia en Kanban / detalle)
         const { error } = await supabase.from("proyectos").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("proyectos")
-          .insert({ ...payload, creado_por: perfil?.id ?? null });
+          .insert({ ...payload, estatus: "pendiente", creado_por: perfil?.id ?? null });
         if (error) throw error;
       }
     },
@@ -119,6 +124,9 @@ export function ProyectoFormDialog({
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const toggleArea = (id: string) =>
+    setAreaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -142,19 +150,59 @@ export function ProyectoFormDialog({
           <F label="Empresa">
             <Sel value={empresa} onChange={setEmpresa} options={empresas.map((e) => ({ value: e.id, label: e.nombre }))} />
           </F>
-          <F label="Área">
-            <Sel value={area} onChange={setArea} options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
+          <F label="Áreas">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start font-normal">
+                  {areaIds.length === 0
+                    ? "Selecciona áreas..."
+                    : `${areaIds.length} área${areaIds.length > 1 ? "s" : ""} seleccionada${areaIds.length > 1 ? "s" : ""}`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-2" align="start">
+                <ScrollArea className="h-48">
+                  {areas.length === 0 ? (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">No hay áreas disponibles.</p>
+                  ) : (
+                    areas.map((a) => (
+                      <div
+                        key={a.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-elevated"
+                        onClick={() => toggleArea(a.id)}
+                      >
+                        <Checkbox checked={areaIds.includes(a.id)} />
+                        <span className="text-sm">{a.nombre}</span>
+                      </div>
+                    ))
+                  )}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+            {areaIds.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {areaIds.map((id) => {
+                  const a = areas.find((x) => x.id === id);
+                  return a ? (
+                    <span
+                      key={id}
+                      className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary"
+                    >
+                      {a.nombre}
+                      <button
+                        type="button"
+                        onClick={() => setAreaIds((prev) => prev.filter((x) => x !== id))}
+                        className="hover:text-primary/70"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
           </F>
           <F label="Responsable">
             <Sel value={responsable} onChange={setResponsable} options={usuarios.map((u) => ({ value: u.id, label: u.nombre_completo }))} />
-          </F>
-          <F label="Estatus">
-            <Sel value={estatus} onChange={setEstatus} options={[
-              { value: "pendiente", label: "Pendiente" },
-              { value: "en_proceso", label: "En proceso" },
-              { value: "finalizado", label: "Finalizado" },
-              { value: "cancelado", label: "Cancelado" },
-            ]} />
           </F>
           <F label="Inicio (plan)">
             <Input type="date" value={fInicio} onChange={(e) => setFInicio(e.target.value)} />
