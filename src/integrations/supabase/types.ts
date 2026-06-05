@@ -448,6 +448,7 @@ export type Database = {
       documentos: {
         Row: {
           aplicacion: string | null
+          aplicacion_arr: string[]
           archivo_url: string | null
           area_id: string | null
           codigo: string
@@ -468,6 +469,7 @@ export type Database = {
         }
         Insert: {
           aplicacion?: string | null
+          aplicacion_arr?: string[]
           archivo_url?: string | null
           area_id?: string | null
           codigo: string
@@ -488,6 +490,7 @@ export type Database = {
         }
         Update: {
           aplicacion?: string | null
+          aplicacion_arr?: string[]
           archivo_url?: string | null
           area_id?: string | null
           codigo?: string
@@ -788,6 +791,7 @@ export type Database = {
       pnc: {
         Row: {
           area_id: string | null
+          area_ids: string[]
           auditoria_id: string | null
           creado_por: string | null
           created_at: string
@@ -805,11 +809,13 @@ export type Database = {
           proceso_documento_id: string | null
           proceso_texto: string | null
           razon: string | null
+          responsables: string[]
           solucion: string | null
           updated_at: string
         }
         Insert: {
           area_id?: string | null
+          area_ids?: string[]
           auditoria_id?: string | null
           creado_por?: string | null
           created_at?: string
@@ -827,11 +833,13 @@ export type Database = {
           proceso_documento_id?: string | null
           proceso_texto?: string | null
           razon?: string | null
+          responsables?: string[]
           solucion?: string | null
           updated_at?: string
         }
         Update: {
           area_id?: string | null
+          area_ids?: string[]
           auditoria_id?: string | null
           creado_por?: string | null
           created_at?: string
@@ -849,6 +857,7 @@ export type Database = {
           proceso_documento_id?: string | null
           proceso_texto?: string | null
           razon?: string | null
+          responsables?: string[]
           solucion?: string | null
           updated_at?: string
         }
@@ -1076,6 +1085,7 @@ export type Database = {
         Row: {
           alta_prioridad: boolean | null
           area_id: string | null
+          area_ids: string[]
           avance_calculado: number | null
           creado_por: string | null
           created_at: string
@@ -1099,6 +1109,7 @@ export type Database = {
         Insert: {
           alta_prioridad?: boolean | null
           area_id?: string | null
+          area_ids?: string[]
           avance_calculado?: number | null
           creado_por?: string | null
           created_at?: string
@@ -1122,6 +1133,7 @@ export type Database = {
         Update: {
           alta_prioridad?: boolean | null
           area_id?: string | null
+          area_ids?: string[]
           avance_calculado?: number | null
           creado_por?: string | null
           created_at?: string
