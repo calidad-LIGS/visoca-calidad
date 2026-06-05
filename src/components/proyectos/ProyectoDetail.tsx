@@ -143,7 +143,11 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
   });
 
   const empresaName = empresas.find((e) => e.id === proyecto.empresa_id)?.nombre ?? "—";
-  const areaName = areas.find((a) => a.id === proyecto.area_id)?.nombre ?? "—";
+  const areaName =
+    (proyecto.area_ids ?? [])
+      .map((id) => areas.find((a) => a.id === id)?.nombre)
+      .filter(Boolean)
+      .join(", ") || "—";
   const avance = Math.round(proyecto.avance_calculado ?? 0);
 
   return (
