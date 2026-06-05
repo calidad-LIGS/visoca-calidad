@@ -377,9 +377,18 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       <div className="mb-3 flex items-center justify-between">
         <span className="font-display font-semibold text-foreground">Acta de Resultados</span>
         {perms.exportarActa && (
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            {acta ? "Regenerar acta" : "Generar Acta de Resultados"}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => setOpen(true)}>
+                    {acta ? "Regenerar acta" : "Generar Acta de Resultados"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {hallazgos.length === 0 && <TooltipContent>Agrega hallazgos primero</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       {acta?.pdf_url ? (
