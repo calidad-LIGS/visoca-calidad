@@ -34,6 +34,7 @@ import {
 export interface Pnc {
   id: string; numero_anio: string; descripcion: string; estatus: string;
   origen: string; empresa_id: string | null; area_id: string | null;
+  area_ids: string[] | null; responsables: string[] | null;
   proceso_documento_id: string | null; proceso_texto: string | null;
   razon: string | null; metodologia: string | null;
   fecha_origen: string; fecha_compromiso: string | null; fecha_cierre: string | null;
@@ -223,7 +224,32 @@ function RegistroTab({ pnc }: { pnc: Pnc }) {
       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
         <Info label="Origen" value={PNC_ORIGEN_LABEL[pnc.origen] ?? pnc.origen} />
         <Info label="Empresa" value={empresas.find((e) => e.id === pnc.empresa_id)?.nombre ?? "—"} />
-        <Info label="Área" value={areas.find((a) => a.id === pnc.area_id)?.nombre ?? "—"} />
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Área</p>
+          {(pnc.area_ids?.length ?? 0) > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {(pnc.area_ids ?? []).map((id) => (
+                <span key={id} className="rounded bg-elevated px-2 py-0.5 text-xs text-foreground">
+                  {areas.find((a) => a.id === id)?.nombre ?? id}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-0.5 text-foreground">{areas.find((a) => a.id === pnc.area_id)?.nombre ?? "—"}</p>
+          )}
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">Responsable</p>
+          {(pnc.responsables?.length ?? 0) > 0 ? (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {(pnc.responsables ?? []).map((r, i) => (
+                <span key={i} className="rounded bg-elevated px-2 py-0.5 text-xs text-foreground">{r}</span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-0.5 text-foreground">—</p>
+          )}
+        </div>
         <Info label="Razón" value={pnc.razon ? PNC_RAZON_LABEL[pnc.razon] : "—"} />
         <Info label="Metodología" value={pnc.metodologia ? PNC_METODOLOGIA_LABEL[pnc.metodologia] : "—"} />
         <Info label="Proceso" value={pnc.proceso_texto ?? (pnc.proceso_documento_id ? "Documento vinculado" : "—")} />

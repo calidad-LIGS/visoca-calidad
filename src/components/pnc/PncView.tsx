@@ -91,6 +91,12 @@ export function PncView() {
   });
 
   const areaName = (id: string | null) => areas.find((a) => a.id === id)?.nombre ?? "—";
+  const areaCell = (p: Pnc) => {
+    const ids = p.area_ids ?? [];
+    if (ids.length === 0) return areaName(p.area_id);
+    const first = areas.find((a) => a.id === ids[0])?.nombre ?? "—";
+    return ids.length > 1 ? `${first} +${ids.length - 1}` : first;
+  };
 
   const kpis = useMemo(() => {
     const abiertos = kpiRows.filter((p) => p.estatus !== "finalizado").length;
@@ -182,7 +188,7 @@ export function PncView() {
                   <Td className="max-w-[18rem] truncate text-foreground">{p.descripcion}</Td>
                   <Td><StatusBadge cfg={PNC_ESTATUS[p.estatus]} /></Td>
                   <Td className="text-xs">{PNC_ORIGEN_LABEL[p.origen]}</Td>
-                  <Td>{areaName(p.area_id)}</Td>
+                  <Td>{areaCell(p)}</Td>
                   <Td className="text-xs">{p.razon ? PNC_RAZON_LABEL[p.razon] : "—"}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>

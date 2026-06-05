@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
+import { useEmpresas, useAreas, useUsuarios } from "@/hooks/useCatalogos";
 import { nextPncNumero, addBusinessDays, toISODate } from "@/lib/pncUtils";
 import { upsertEvento } from "@/lib/calendarSync";
 import {
@@ -16,6 +17,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -27,11 +33,14 @@ export function PncFormDialog({
   const { perfil } = useAuth();
   const { data: empresas = [] } = useEmpresas();
   const { data: areas = [] } = useAreas();
+  const { data: usuarios = [] } = useUsuarios();
 
   const [empresa, setEmpresa] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [origen, setOrigen] = useState("manual");
-  const [area, setArea] = useState("");
+  const [areaIds, setAreaIds] = useState<string[]>([]);
+  const [responsables, setResponsables] = useState<string[]>([]);
+  const [nuevoResp, setNuevoResp] = useState("");
   const [procesoBusqueda, setProcesoBusqueda] = useState("");
   const [procesoDocId, setProcesoDocId] = useState<string>("");
   const [procesoTexto, setProcesoTexto] = useState("");
@@ -51,9 +60,19 @@ export function PncFormDialog({
     },
   });
 
+  const toggleArea = (id: string) =>
+    setAreaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const addResp = () => {
+    const v = nuevoResp.trim();
+    if (v && !responsables.includes(v)) setResponsables((prev) => [...prev, v]);
+    setNuevoResp("");
+  };
+
   useEffect(() => {
     if (open) {
-      setEmpresa(""); setDescripcion(""); setOrigen("manual"); setArea("");
+      setEmpresa(""); setDescripcion(""); setOrigen("manual"); setAreaIds([]);
+      setResponsables([]); setNuevoResp("");
       setProcesoBusqueda(""); setProcesoDocId(""); setProcesoTexto("");
       setRazon("nc_menor"); setMetodologia("na");
       setFechaOrigen(toISODate(new Date())); setFechaCompromiso(""); setObservaciones("");
@@ -83,7 +102,9 @@ export function PncFormDialog({
         estatus: "pendiente",
         origen,
         empresa_id: empresa || null,
-        area_id: area || null,
+        area_id: areaIds[0] || null,
+        area_ids: areaIds,
+        responsables,
         proceso_documento_id: procesoDocId || null,
         proceso_texto: procesoDocId ? null : (procesoTexto || null),
         razon,
@@ -102,7 +123,7 @@ export function PncFormDialog({
         await upsertEvento({
           tipo: "pnc", titulo: `${numero}: ${descripcion.slice(0, 40)}`,
           descripcion, fecha_inicio: fechaCompromiso, referencia_id: data.id,
-          referencia_tabla: "pnc", empresa_id: empresa || null, area_id: area || null,
+          referencia_tabla: "pnc", empresa_id: empresa || null, area_id: areaIds[0] || null,
         });
       }
       return numero;
@@ -133,8 +154,87 @@ export function PncFormDialog({
           <F label="Descripción" full>
             <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
           </F>
-          <F label="Área">
-            <Sel value={area} onChange={setArea} options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
+          <F label="Áreas">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start font-normal">
+                  {areaIds.length === 0
+                    ? "Selecciona áreas..."
+                    : `${areaIds.length} área${areaIds.length > 1 ? "s" : ""} seleccionada${areaIds.length > 1 ? "s" : ""}`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-2" align="start">
+                <ScrollArea className="h-48">
+                  {areas.length === 0 ? (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">No hay áreas disponibles.</p>
+                  ) : (
+                    areas.map((a) => (
+                      <div
+                        key={a.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-elevated"
+                        onClick={() => toggleArea(a.id)}
+                      >
+                        <Checkbox checked={areaIds.includes(a.id)} />
+                        <span className="text-sm">{a.nombre}</span>
+                      </div>
+                    ))
+                  )}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+            {areaIds.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {areaIds.map((id) => {
+                  const a = areas.find((x) => x.id === id);
+                  return a ? (
+                    <span key={id} className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
+                      {a.nombre}
+                      <button type="button" onClick={() => setAreaIds((prev) => prev.filter((x) => x !== id))} className="hover:text-primary/70">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
+          </F>
+          <F label="Responsables" full>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={nuevoResp}
+                  onChange={(e) => setNuevoResp(e.target.value)}
+                  placeholder="Nombre del responsable..."
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addResp(); } }}
+                />
+                <Button type="button" variant="outline" size="icon" onClick={addResp}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <Select value="" onValueChange={(id) => {
+                const u = usuarios.find((x) => x.id === id);
+                if (u && !responsables.includes(u.nombre_completo)) setResponsables((prev) => [...prev, u.nombre_completo]);
+              }}>
+                <SelectTrigger className="text-xs text-muted-foreground">
+                  <SelectValue placeholder="O selecciona un usuario del sistema..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios.map((u) => <SelectItem key={u.id} value={u.id}>{u.nombre_completo}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {responsables.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {responsables.map((r, i) => (
+                    <span key={i} className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
+                      {r}
+                      <button type="button" onClick={() => setResponsables((prev) => prev.filter((_, j) => j !== i))} className="hover:text-primary/70">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </F>
           <F label="Razón">
             <Sel value={razon} onChange={setRazon} options={Object.entries(PNC_RAZON_LABEL).map(([value, label]) => ({ value, label }))} />
