@@ -89,8 +89,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "VISOCA — Gestión de Calidad" },
       { name: "twitter:description", content: "Sistema VISOCA para la gestión integral de calidad, documentos, auditorías, no conformidades y proyectos de mejora de LIGS Group." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/78d840fb-98b2-4976-b7da-21581c4114a6" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/78d840fb-98b2-4976-b7da-21581c4114a6" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dcU8zQcIpsYC9H5A4HoeCWUWvnr1/social-images/social-1780701564606-Gemini_Generated_Image_eor91teor91teor9.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/dcU8zQcIpsYC9H5A4HoeCWUWvnr1/social-images/social-1780701564606-Gemini_Generated_Image_eor91teor91teor9.webp" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
