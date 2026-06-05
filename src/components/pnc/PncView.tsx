@@ -9,7 +9,7 @@ import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
 import { diasInfo } from "@/lib/pncUtils";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DataTable, Td } from "@/components/common/DataTable";
+import { DataTable, Td, Tr } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
 import { Pagination } from "@/components/common/Pagination";
@@ -156,12 +156,12 @@ export function PncView() {
           action={perms.crearPnc && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nuevo PNC</Button>} />
       ) : (
         <>
-          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
+          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isLoading={isLoading} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
             {pncs.map((p) => {
               const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "finalizado");
               const dotColor = { accent: "#1BC8A0", warning: "#F5A623", danger: "#E54B4B" }[info.color];
               return (
-                <tr key={p.id} className="cursor-pointer" onClick={() => setDetailId(p.id)}>
+                <Tr key={p.id} active={detailId === p.id} onClick={() => setDetailId(p.id)}>
                   <Td><span className="font-mono text-primary">{p.numero_anio}</span></Td>
                   <Td className="max-w-[18rem] truncate text-foreground">{p.descripcion}</Td>
                   <Td><StatusBadge cfg={PNC_ESTATUS[p.estatus]} /></Td>
@@ -171,7 +171,7 @@ export function PncView() {
                   <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
                   <Td><span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span></Td>
-                </tr>
+                </Tr>
               );
             })}
           </DataTable>

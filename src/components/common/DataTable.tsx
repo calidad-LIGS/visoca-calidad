@@ -1,16 +1,19 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function DataTable({
   headers,
   children,
   empty,
   isEmpty,
+  isLoading,
 }: {
   headers: ReactNode[];
   children: ReactNode;
   empty?: string;
   isEmpty?: boolean;
+  isLoading?: boolean;
 }) {
   return (
     <div className="max-h-[65vh] overflow-auto rounded-lg border border-border">
@@ -28,7 +31,17 @@ export function DataTable({
           </tr>
         </thead>
         <tbody>
-          {isEmpty ? (
+          {isLoading ? (
+            Array.from({ length: 5 }).map((_, r) => (
+              <tr key={r}>
+                {headers.map((_, c) => (
+                  <Td key={c}>
+                    <Skeleton className="h-4 w-full max-w-[8rem]" />
+                  </Td>
+                ))}
+              </tr>
+            ))
+          ) : isEmpty ? (
             <tr>
               <td
                 colSpan={headers.length}
@@ -43,6 +56,32 @@ export function DataTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+export function Tr({
+  children,
+  onClick,
+  active,
+  className,
+}: {
+  children: ReactNode;
+  onClick?: () => void;
+  active?: boolean;
+  className?: string;
+}) {
+  return (
+    <tr
+      onClick={onClick}
+      data-active={active ? "" : undefined}
+      className={cn(
+        onClick && "cursor-pointer transition-colors hover:!bg-elevated",
+        active && "border-l-2 border-primary !bg-primary/10",
+        className,
+      )}
+    >
+      {children}
+    </tr>
   );
 }
 

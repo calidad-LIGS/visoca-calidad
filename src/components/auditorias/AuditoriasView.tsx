@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useUsuarios } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DataTable, Td } from "@/components/common/DataTable";
+import { DataTable, Td, Tr } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
 import { Pagination } from "@/components/common/Pagination";
@@ -131,11 +131,11 @@ export function AuditoriasView() {
           action={perms.crearAuditoria && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nueva Auditoría</Button>} />
       ) : (
         <>
-          <DataTable headers={["Código", "Tipo", "Certificación", "Período", "Auditor", "Hallazgos", "Estatus"]} isEmpty={auditorias.length === 0} empty="Sin auditorías.">
+          <DataTable headers={["Código", "Tipo", "Certificación", "Período", "Auditor", "Hallazgos", "Estatus"]} isLoading={isLoading} isEmpty={auditorias.length === 0} empty="Sin auditorías.">
             {auditorias.map((a) => {
               const h = hallazgosCount[a.id];
               return (
-                <tr key={a.id} className="cursor-pointer" onClick={() => navigate({ to: "/auditorias/$id", params: { id: a.id } })}>
+                <Tr key={a.id} onClick={() => navigate({ to: "/auditorias/$id", params: { id: a.id } })}>
                   <Td><span className="font-mono text-primary">{a.codigo_auditoria}</span></Td>
                   <Td>
                     <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: a.tipo === "interna" ? "#3B7DD8" : "#8B5CF6", color: "#fff" }}>
@@ -155,7 +155,7 @@ export function AuditoriasView() {
                     ) : <span className="text-xs text-muted-foreground">—</span>}
                   </Td>
                   <Td><StatusBadge cfg={AUD_ESTATUS[a.estatus]} /></Td>
-                </tr>
+                </Tr>
               );
             })}
           </DataTable>
