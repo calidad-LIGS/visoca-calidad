@@ -53,9 +53,16 @@ export function DocumentoFicha({
   onOpenDoc?: (id: string) => void;
 }) {
   const open = !!doc;
+  const isMobile = useIsMobile();
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-[600px]">
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className={cn(
+          "overflow-y-auto",
+          isMobile ? "h-[90vh]" : "w-full sm:max-w-[600px]",
+        )}
+      >
         {doc && <FichaBody doc={doc} onOpenDoc={onOpenDoc} />}
       </SheetContent>
     </Sheet>
