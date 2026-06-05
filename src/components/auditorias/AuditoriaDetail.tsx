@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
-  ChevronLeft, Plus, FileText, Download, Lock, ChevronDown, ExternalLink,
+  ChevronLeft, Plus, FileText, Download, Lock, ChevronDown, ExternalLink, Search, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { usePermisos } from "@/lib/permisos";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { crearHallazgoConPnc } from "@/lib/auditoriaUtils";
+import { addBusinessDays, toISODate } from "@/lib/pncUtils";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
 import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { generarActaBlob, type ActaData } from "./ActaPdf";
