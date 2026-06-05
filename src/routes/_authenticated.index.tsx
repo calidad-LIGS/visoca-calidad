@@ -31,6 +31,7 @@ interface Stats {
   docsRevision: number;
   pncAbiertos: number;
   pncVencidos: number;
+  actividadesVencidas: number;
   pncPorEstatus: { name: string; value: number; color: string }[];
   audActivas: number;
   audPorEstatus: { name: string; value: number; color: string }[];
@@ -47,12 +48,19 @@ function DashboardPage() {
   const { data } = useQuery<Stats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [docs, pnc, aud, proy, ev] = await Promise.all([
+      const hoy = new Date().toISOString().slice(0, 10);
+      const [docs, pnc, aud, proy, ev, acts] = await Promise.all([
         supabase.from("documentos").select("estatus"),
         supabase.from("pnc").select("estatus, fecha_compromiso"),
         supabase.from("auditorias").select("estatus"),
         supabase.from("proyectos").select("nombre, estatus, avance_calculado, alta_prioridad"),
         supabase.from("eventos_calendario").select("id, titulo, fecha_inicio, color").gte("fecha_inicio", new Date().toISOString().slice(0, 10)).order("fecha_inicio").limit(6),
+        supabase
+          .from("actividades")
+          .select("id", { count: "exact", head: true })
+          .lt("fecha_fin_plan", hoy)
+          .lt("avance", 100)
+          .neq("estatus", "cancelado"),
       ]);
 
       const docRows = docs.data ?? [];
@@ -73,6 +81,7 @@ function DashboardPage() {
         docsRevision: docRows.filter((d) => d.estatus === "en_revision").length,
         pncAbiertos: pncRows.filter((p) => p.estatus !== "finalizado").length,
         pncVencidos: pncRows.filter((p) => p.estatus !== "finalizado" && p.fecha_compromiso && new Date(p.fecha_compromiso) < now).length,
+        actividadesVencidas: acts.count ?? 0,
         pncPorEstatus: countBy(pncRows, PNC_ESTATUS),
         audActivas: audRows.filter((a) => !["cerrada"].includes(a.estatus)).length,
         audPorEstatus: countBy(audRows, AUD_ESTATUS),
@@ -110,6 +119,42 @@ function DashboardPage() {
           <KpiCard label="Proyectos activos" value={data?.proyActivos ?? "—"} accent="primary" icon={<BarChart2 className="h-4 w-4" />} />
         </Link>
       </div>
+
+      {data && (data.pncVencidos > 0 || data.actividadesVencidas > 0) && (
+        <div className="mb-6 rounded-lg border border-danger/30 bg-danger/5 p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-danger">
+            <AlertTriangle className="h-4 w-4" /> Alertas que requieren atención
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {data.pncVencidos > 0 && (
+              <Link
+                to="/no-conformidades"
+                search={{ pncId: undefined }}
+                className="flex items-center gap-2 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger hover:bg-danger/20"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {data.pncVencidos} PNC vencido{data.pncVencidos > 1 ? "s" : ""}
+              </Link>
+            )}
+            {data.actividadesVencidas > 0 && (
+              <Link
+                to="/proyectos"
+                className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm text-warning hover:bg-warning/20"
+              >
+                <BarChart2 className="h-3.5 w-3.5" />
+                {data.actividadesVencidas} actividad{data.actividadesVencidas > 1 ? "es" : ""} atrasada{data.actividadesVencidas > 1 ? "s" : ""}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {data && data.pncVencidos === 0 && data.actividadesVencidas === 0 && (
+        <div className="mb-6 rounded-lg border border-accent/30 bg-accent/5 p-3 text-sm text-accent">
+          ✓ Sin alertas activas — todo al corriente
+        </div>
+      )}
+
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChartCard title="No conformidades por estatus">
