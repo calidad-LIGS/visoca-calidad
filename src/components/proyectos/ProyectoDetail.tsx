@@ -130,7 +130,7 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
           referencia_id: act.id,
           referencia_tabla: "actividades",
           empresa_id: proyecto.empresa_id,
-          area_id: proyecto.area_id,
+          area_id: proyecto.area_ids?.[0] ?? proyecto.area_id ?? null,
         });
         toast.success("Agendado en calendario");
       } else {
