@@ -188,7 +188,7 @@ export function PncView() {
                   <Td className="max-w-[18rem] truncate text-foreground">{p.descripcion}</Td>
                   <Td><StatusBadge cfg={PNC_ESTATUS[p.estatus]} /></Td>
                   <Td className="text-xs">{PNC_ORIGEN_LABEL[p.origen]}</Td>
-                  <Td>{areaName(p.area_id)}</Td>
+                  <Td>{areaCell(p)}</Td>
                   <Td className="text-xs">{p.razon ? PNC_RAZON_LABEL[p.razon] : "—"}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
