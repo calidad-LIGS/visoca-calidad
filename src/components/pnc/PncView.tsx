@@ -91,6 +91,12 @@ export function PncView() {
   });
 
   const areaName = (id: string | null) => areas.find((a) => a.id === id)?.nombre ?? "—";
+  const areaCell = (p: Pnc) => {
+    const ids = p.area_ids ?? [];
+    if (ids.length === 0) return areaName(p.area_id);
+    const first = areas.find((a) => a.id === ids[0])?.nombre ?? "—";
+    return ids.length > 1 ? `${first} +${ids.length - 1}` : first;
+  };
 
   const kpis = useMemo(() => {
     const abiertos = kpiRows.filter((p) => p.estatus !== "finalizado").length;
