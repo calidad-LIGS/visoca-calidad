@@ -33,11 +33,14 @@ export function PncFormDialog({
   const { perfil } = useAuth();
   const { data: empresas = [] } = useEmpresas();
   const { data: areas = [] } = useAreas();
+  const { data: usuarios = [] } = useUsuarios();
 
   const [empresa, setEmpresa] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [origen, setOrigen] = useState("manual");
-  const [area, setArea] = useState("");
+  const [areaIds, setAreaIds] = useState<string[]>([]);
+  const [responsables, setResponsables] = useState<string[]>([]);
+  const [nuevoResp, setNuevoResp] = useState("");
   const [procesoBusqueda, setProcesoBusqueda] = useState("");
   const [procesoDocId, setProcesoDocId] = useState<string>("");
   const [procesoTexto, setProcesoTexto] = useState("");
@@ -56,6 +59,15 @@ export function PncFormDialog({
       return data as { id: string; codigo: string; nombre: string }[];
     },
   });
+
+  const toggleArea = (id: string) =>
+    setAreaIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const addResp = () => {
+    const v = nuevoResp.trim();
+    if (v && !responsables.includes(v)) setResponsables((prev) => [...prev, v]);
+    setNuevoResp("");
+  };
 
   useEffect(() => {
     if (open) {
