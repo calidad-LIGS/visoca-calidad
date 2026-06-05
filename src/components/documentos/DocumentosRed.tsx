@@ -120,6 +120,17 @@ export function DocumentosRed() {
 
       {docs.length === 0 ? (
         <EmptyState icon={<Network className="h-10 w-10" />} title="No hay documentos para graficar" />
+      ) : rels.length === 0 ? (
+        <EmptyState
+          icon={<Network className="h-10 w-10" />}
+          title="Aún no hay relaciones entre documentos"
+          description="Ábrelos desde la Lista Maestra y agrégalas en la ficha del documento."
+          action={
+            <Button asChild>
+              <Link to="/documentos">Ir a Lista Maestra</Link>
+            </Button>
+          }
+        />
       ) : (
         <>
           <div className="mb-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -142,7 +153,7 @@ export function DocumentosRed() {
             >
               <Background color="#2E3347" gap={20} />
               <Controls />
-              <MiniMap nodeColor={(n) => (n.style?.borderColor as string) ?? "#2E3347"} maskColor="#0F1117cc" />
+              <MiniMap nodeColor={(n) => (n.style?.backgroundColor as string) ?? "#2E3347"} maskColor="#0F1117cc" />
             </ReactFlow>
           </div>
         </>
