@@ -71,7 +71,8 @@ export function PncFormDialog({
 
   useEffect(() => {
     if (open) {
-      setEmpresa(""); setDescripcion(""); setOrigen("manual"); setArea("");
+      setEmpresa(""); setDescripcion(""); setOrigen("manual"); setAreaIds([]);
+      setResponsables([]); setNuevoResp("");
       setProcesoBusqueda(""); setProcesoDocId(""); setProcesoTexto("");
       setRazon("nc_menor"); setMetodologia("na");
       setFechaOrigen(toISODate(new Date())); setFechaCompromiso(""); setObservaciones("");
