@@ -46,6 +46,37 @@ function getNodeStyle(tipo: string): React.CSSProperties {
 
 interface Rel { documento_origen_id: string; documento_destino_id: string; tipo_relacion: string }
 
+const REL_LABEL: Record<string, string> = {
+  padre: "Padre de",
+  hijo: "Hijo de",
+  sustituye: "Sustituye a",
+  sustituto: "Sustituye a",
+  sustituido_por: "Sustituido por",
+  referencia: "Referencia",
+  referencia_mutua: "Mutua",
+};
+
+function getEdgeStyle(tipoRelacion: string) {
+  if (tipoRelacion === "referencia_mutua") {
+    return {
+      markerStart: { type: MarkerType.ArrowClosed, color: "#5B9EF0" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#5B9EF0" },
+      style: { stroke: "#5B9EF0", strokeDasharray: "4 2" },
+    };
+  }
+  if (tipoRelacion === "padre" || tipoRelacion === "hijo") {
+    return {
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#1BC8A0" },
+      style: { stroke: "#1BC8A0" },
+    };
+  }
+  // referencia simple
+  return {
+    markerEnd: { type: MarkerType.ArrowClosed, color: "#8B90A0" },
+    style: { stroke: "#8B90A0", strokeDasharray: "4 2" },
+  };
+}
+
 export function DocumentosRed() {
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscador, setBuscador] = useState(false);
@@ -73,21 +104,38 @@ export function DocumentosRed() {
   });
 
   const { initialNodes, initialEdges } = useMemo(() => {
-    const cols = Math.max(1, Math.ceil(Math.sqrt(docs.length)));
-    const nodes: Node[] = docs.map((d, i) => ({
-      id: d.id,
-      position: { x: (i % cols) * 220, y: Math.floor(i / cols) * 130 },
-      data: { label: `${d.codigo}\n${d.nombre.slice(0, 30)}` },
-      style: getNodeStyle(d.tipo),
-    }));
+    const nodes: Node[] = docs.map((d) => {
+      const nivelDocs = docs.filter((x) => x.nivel === d.nivel);
+      const nivelIdx = nivelDocs.indexOf(d);
+      const xSpacing = Math.max(180, 900 / Math.max(nivelDocs.length, 1));
+      return {
+        id: d.id,
+        type: "default",
+        position: {
+          x: nivelIdx * xSpacing + xSpacing / 2,
+          y: (d.nivel ?? 3) * 130,
+        },
+        data: {
+          label: (
+            <div style={{ textAlign: "center", lineHeight: 1.3 }}>
+              <div style={{ fontFamily: "monospace", fontSize: 10, opacity: 0.7 }}>{d.codigo}</div>
+              <div style={{ fontSize: 11, fontWeight: 600 }}>
+                {d.nombre.slice(0, 28)}{d.nombre.length > 28 ? "…" : ""}
+              </div>
+            </div>
+          ),
+        },
+        style: getNodeStyle(d.tipo),
+      };
+    });
     const edges: Edge[] = rels.map((r, i) => ({
       id: `e${i}`,
       source: r.documento_origen_id,
       target: r.documento_destino_id,
-      label: r.tipo_relacion,
-      labelStyle: { fill: "#8B90A0", fontSize: 9 },
-      style: { stroke: "#2E3347" },
-      markerEnd: { type: MarkerType.ArrowClosed, color: "#555A6B" },
+      label: REL_LABEL[r.tipo_relacion] ?? r.tipo_relacion,
+      labelStyle: { fontSize: 10, fill: "#8B90A0" },
+      labelBgStyle: { fill: "#1A1D27", fillOpacity: 0.9 },
+      ...getEdgeStyle(r.tipo_relacion),
     }));
     return { initialNodes: nodes, initialEdges: edges };
   }, [docs, rels]);
@@ -140,6 +188,20 @@ export function DocumentosRed() {
                 {label}
               </span>
             ))}
+          </div>
+          <div className="mb-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="h-0 w-6 border-t-2" style={{ borderColor: "#1BC8A0" }} />
+              Padre/Hijo (jerarquía directa)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0 w-6 border-t-2 border-dashed" style={{ borderColor: "#8B90A0" }} />
+              Referencia simple (A menciona a B)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0 w-6 border-t-2 border-dashed" style={{ borderColor: "#5B9EF0" }} />
+              Referencia mutua (A y B se mencionan) ↔
+            </span>
           </div>
           <div className="flex-1 overflow-hidden rounded-lg border border-border">
             <ReactFlow
