@@ -44,6 +44,7 @@ const REL_LABELS: Record<string, string> = {
   sustituto: "Sustituye a",
   sustituido_por: "Sustituido por",
   referencia: "Referencia",
+  referencia_mutua: "Se mencionan mutuamente",
 };
 
 export function DocumentoFicha({
