@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DataTable, Td } from "@/components/common/DataTable";
+import { DataTable, Td, Tr } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { KpiCard } from "@/components/common/KpiCard";
 import { Button } from "@/components/ui/button";
@@ -145,11 +145,12 @@ export function ProyectosView() {
       ) : view === "lista" ? (
         <DataTable
           headers={["Nombre", "Empresa", "Área", "Responsable", "Avance", "Estatus", ""]}
+          isLoading={isLoading}
           isEmpty={filtered.length === 0}
           empty="Sin proyectos para los filtros aplicados."
         >
           {filtered.map((p) => (
-            <tr key={p.id} className="group">
+            <Tr key={p.id} active={detailLive?.id === p.id} className="group">
               <Td className="text-foreground">
                 <button className="flex items-center gap-2 hover:text-primary" onClick={() => setDetail(p)}>
                   {p.alta_prioridad && <span className="h-2 w-2 rounded-full bg-danger" />}
@@ -174,7 +175,7 @@ export function ProyectosView() {
                   )}
                 </div>
               </Td>
-            </tr>
+            </Tr>
           ))}
         </DataTable>
       ) : view === "gantt" ? (
