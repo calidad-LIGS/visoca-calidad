@@ -81,6 +81,7 @@ function DashboardPage() {
         docsRevision: docRows.filter((d) => d.estatus === "en_revision").length,
         pncAbiertos: pncRows.filter((p) => p.estatus !== "finalizado").length,
         pncVencidos: pncRows.filter((p) => p.estatus !== "finalizado" && p.fecha_compromiso && new Date(p.fecha_compromiso) < now).length,
+        actividadesVencidas: acts.count ?? 0,
         pncPorEstatus: countBy(pncRows, PNC_ESTATUS),
         audActivas: audRows.filter((a) => !["cerrada"].includes(a.estatus)).length,
         audPorEstatus: countBy(audRows, AUD_ESTATUS),
