@@ -80,6 +80,7 @@ export function DocumentoFormDialog({
   const { data: areas = [] } = useAreas();
 
   const [form, setForm] = useState<Partial<Documento>>({});
+  const [aplicaciones, setAplicaciones] = useState<string[]>([]);
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
@@ -88,17 +89,24 @@ export function DocumentoFormDialog({
         editing ?? {
           tipo: "proceso",
           estatus: "vigente",
-          origen: "interno",
-          aplicacion: "interno",
           nivel: 3,
           version: "1.0",
         },
+      );
+      setAplicaciones(
+        editing?.aplicacion_arr ?? [editing?.aplicacion].filter(Boolean) as string[],
       );
       setFile(null);
     }
   }, [open, editing]);
 
   const set = (k: keyof Documento, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Auto-seleccionar nivel según el tipo del documento
+  useEffect(() => {
+    if (form.tipo && TIPO_NIVEL[form.tipo]) set("nivel", TIPO_NIVEL[form.tipo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.tipo]);
 
   const save = useMutation({
     mutationFn: async () => {
@@ -121,9 +129,8 @@ export function DocumentoFormDialog({
         version: form.version ?? "1.0",
         fecha_ultima_edicion: form.fecha_ultima_edicion ?? new Date().toISOString().slice(0, 10),
         estatus: form.estatus!,
-        origen: form.origen ?? "interno",
         nivel: form.nivel ?? 3,
-        aplicacion: form.aplicacion ?? "interno",
+        aplicacion_arr: aplicaciones,
         comentarios: form.comentarios ?? null,
         archivo_url,
         drive_url: form.drive_url ?? null,
