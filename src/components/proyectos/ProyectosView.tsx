@@ -37,7 +37,7 @@ export function ProyectosView() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("proyectos")
-        .select("id, nombre, objetivo, tipo, proceso_perteneciente, empresa_id, area_id, responsable_usuario_id, responsable_nombre, estatus, alta_prioridad, avance_calculado, fecha_inicio_plan, fecha_fin_plan, nota_observacion")
+        .select("id, nombre, objetivo, tipo, proceso_perteneciente, empresa_id, area_id, area_ids, responsable_usuario_id, responsable_nombre, estatus, alta_prioridad, avance_calculado, fecha_inicio_plan, fecha_fin_plan, nota_observacion")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Proyecto[];
@@ -49,7 +49,8 @@ export function ProyectosView() {
   const detailLive = detail ? proyectos.find((p) => p.id === detail.id) ?? detail : null;
 
   const empresaName = (id: string | null) => empresas.find((e) => e.id === id)?.nombre ?? "—";
-  const areaName = (id: string | null) => areas.find((a) => a.id === id)?.nombre ?? "—";
+  const areaNombres = (ids: string[] | null) =>
+    (ids ?? []).map((id) => areas.find((a) => a.id === id)?.nombre).filter(Boolean).join(", ") || "—";
 
   const kpis = useMemo(() => {
     const activos = proyectos.filter((p) => p.estatus === "en_proceso").length;
@@ -158,7 +159,7 @@ export function ProyectosView() {
                 </button>
               </Td>
               <Td>{empresaName(p.empresa_id)}</Td>
-              <Td>{areaName(p.area_id)}</Td>
+              <Td>{areaNombres(p.area_ids)}</Td>
               <Td>{p.responsable_nombre ?? "—"}</Td>
               <Td>
                 <div className="flex w-32 items-center gap-2">
