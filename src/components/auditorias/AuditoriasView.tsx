@@ -126,6 +126,22 @@ export function AuditoriasView() {
         </TabsList>
       </Tabs>
 
+      <div className="mb-4">
+        {tab !== "todas" ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{total} resultados</span>
+            <button
+              onClick={() => { setTab("todas"); setPage(0); }}
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              <X className="h-3 w-3" /> Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{total} registros</span>
+        )}
+      </div>
+
       {!isLoading && kpiRows.length === 0 ? (
         <EmptyState title="No hay auditorías programadas" description="Registra la primera del año."
           action={perms.crearAuditoria && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nueva Auditoría</Button>} />
