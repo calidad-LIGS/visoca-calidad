@@ -224,6 +224,22 @@ export function DocumentosView() {
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
       </div>
 
+      <div className="mb-4">
+        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || search.trim() !== "") ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{total} resultados</span>
+            <button
+              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setSearch(""); setPage(0); }}
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              <X className="h-3 w-3" /> Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{total} registros</span>
+        )}
+      </div>
+
       {!isLoading && estatusRows.length === 0 ? (
         <EmptyState
           icon={<Search className="h-10 w-10" />}
