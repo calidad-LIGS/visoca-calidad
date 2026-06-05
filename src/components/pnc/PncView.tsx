@@ -171,7 +171,7 @@ export function PncView() {
                   <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
                   <Td><span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span></Td>
-                </tr>
+                </Tr>
               );
             })}
           </DataTable>
