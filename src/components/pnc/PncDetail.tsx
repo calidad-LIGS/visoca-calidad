@@ -34,6 +34,7 @@ import {
 export interface Pnc {
   id: string; numero_anio: string; descripcion: string; estatus: string;
   origen: string; empresa_id: string | null; area_id: string | null;
+  area_ids: string[] | null; responsables: string[] | null;
   proceso_documento_id: string | null; proceso_texto: string | null;
   razon: string | null; metodologia: string | null;
   fecha_origen: string; fecha_compromiso: string | null; fecha_cierre: string | null;
