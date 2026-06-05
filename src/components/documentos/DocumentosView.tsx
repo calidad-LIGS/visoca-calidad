@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Plus, FileDown, Search, Eye, Pencil, Sparkles, Network } from "lucide-react";
+import { Plus, FileDown, Search, Eye, Pencil, Sparkles, Network, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
@@ -222,6 +222,22 @@ export function DocumentosView() {
           options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
         <FilterSelect value={fTipo} onChange={setFTipo} placeholder="Tipo"
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
+      </div>
+
+      <div className="mb-4">
+        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || search.trim() !== "") ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{total} resultados</span>
+            <button
+              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setSearch(""); setPage(0); }}
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              <X className="h-3 w-3" /> Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{total} registros</span>
+        )}
       </div>
 
       {!isLoading && estatusRows.length === 0 ? (

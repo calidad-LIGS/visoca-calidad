@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsuarios } from "@/hooks/useCatalogos";
@@ -125,6 +125,22 @@ export function AuditoriasView() {
           <TabsTrigger value="externa">Externas</TabsTrigger>
         </TabsList>
       </Tabs>
+
+      <div className="mb-4">
+        {tab !== "todas" ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{total} resultados</span>
+            <button
+              onClick={() => { setTab("todas"); setPage(0); }}
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              <X className="h-3 w-3" /> Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{total} registros</span>
+        )}
+      </div>
 
       {!isLoading && kpiRows.length === 0 ? (
         <EmptyState title="No hay auditorías programadas" description="Registra la primera del año."

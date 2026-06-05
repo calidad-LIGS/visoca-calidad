@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
@@ -149,6 +149,22 @@ export function PncView() {
         <Filt value={fEstatus} onChange={setFEstatus} placeholder="Estatus" options={Object.entries(PNC_ESTATUS).map(([value, c]) => ({ value, label: c.label }))} />
         <Filt value={fEmpresa} onChange={setFEmpresa} placeholder="Empresa" options={empresas.map((e) => ({ value: e.id, label: e.nombre }))} />
         <Filt value={fOrigen} onChange={setFOrigen} placeholder="Origen" options={Object.entries(PNC_ORIGEN_LABEL).map(([value, label]) => ({ value, label }))} />
+      </div>
+
+      <div className="mb-4">
+        {hasFilters ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>{total} resultados</span>
+            <button
+              onClick={() => { setFEstatus("all"); setFEmpresa("all"); setFOrigen("all"); setPage(0); }}
+              className="flex items-center gap-1 text-primary hover:underline"
+            >
+              <X className="h-3 w-3" /> Limpiar filtros
+            </button>
+          </div>
+        ) : (
+          <span className="text-sm text-muted-foreground">{total} registros</span>
+        )}
       </div>
 
       {!isLoading && total === 0 && !hasFilters ? (
