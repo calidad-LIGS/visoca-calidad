@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { DataTable, Td } from "@/components/common/DataTable";
+import { DataTable, Td, Tr } from "@/components/common/DataTable";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Pagination } from "@/components/common/Pagination";
 import { Button } from "@/components/ui/button";
@@ -239,11 +239,12 @@ export function DocumentosView() {
         <>
           <DataTable
             headers={["Empresa", "Tipo", "Código", "Nombre", "Área", "Versión", "Fecha", "Estatus", "Origen", "Nivel", ""]}
+            isLoading={isLoading}
             isEmpty={documentos.length === 0}
             empty="Sin documentos para los filtros aplicados."
           >
             {documentos.map((d) => (
-              <tr key={d.id} className="group">
+              <Tr key={d.id} active={fichaId === d.id} className="group">
                 <Td>{empresaName(d.empresa_id)}</Td>
                 <Td><OutlineBadge>{DOC_TIPO_LABEL[d.tipo] ?? d.tipo}</OutlineBadge></Td>
                 <Td><button className="font-mono text-primary hover:underline" onClick={() => setFichaId(d.id)}>{d.codigo}</button></Td>
@@ -262,7 +263,7 @@ export function DocumentosView() {
                     )}
                   </div>
                 </Td>
-              </tr>
+              </Tr>
             ))}
           </DataTable>
 
