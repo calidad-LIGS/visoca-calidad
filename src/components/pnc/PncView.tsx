@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "@tanstack/react-router";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
-import { Plus, FileDown } from "lucide-react";
+import { Plus, FileDown, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
