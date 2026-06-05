@@ -120,6 +120,42 @@ function DashboardPage() {
         </Link>
       </div>
 
+      {data && (data.pncVencidos > 0 || data.actividadesVencidas > 0) && (
+        <div className="mb-6 rounded-lg border border-danger/30 bg-danger/5 p-4">
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-danger">
+            <AlertTriangle className="h-4 w-4" /> Alertas que requieren atención
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {data.pncVencidos > 0 && (
+              <Link
+                to="/no-conformidades"
+                search={{ pncId: undefined }}
+                className="flex items-center gap-2 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger hover:bg-danger/20"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {data.pncVencidos} PNC vencido{data.pncVencidos > 1 ? "s" : ""}
+              </Link>
+            )}
+            {data.actividadesVencidas > 0 && (
+              <Link
+                to="/proyectos"
+                className="flex items-center gap-2 rounded-md bg-warning/10 px-3 py-2 text-sm text-warning hover:bg-warning/20"
+              >
+                <BarChart2 className="h-3.5 w-3.5" />
+                {data.actividadesVencidas} actividad{data.actividadesVencidas > 1 ? "es" : ""} atrasada{data.actividadesVencidas > 1 ? "s" : ""}
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      {data && data.pncVencidos === 0 && data.actividadesVencidas === 0 && (
+        <div className="mb-6 rounded-lg border border-accent/30 bg-accent/5 p-3 text-sm text-accent">
+          ✓ Sin alertas activas — todo al corriente
+        </div>
+      )}
+
+
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <ChartCard title="No conformidades por estatus">
           {data && data.pncPorEstatus.length > 0 ? (
