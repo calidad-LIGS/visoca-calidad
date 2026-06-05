@@ -23,7 +23,7 @@ import { DocumentoFicha } from "./DocumentoFicha";
 import { BuscadorIA } from "./BuscadorIA";
 
 const PAGE_SIZE = 25;
-const DOC_COLS = "id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url";
+const DOC_COLS = "id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, aplicacion_arr, comentarios, archivo_url, drive_url";
 
 
 export function DocumentosView() {
