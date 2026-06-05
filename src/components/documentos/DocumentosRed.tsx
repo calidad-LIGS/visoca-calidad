@@ -46,6 +46,37 @@ function getNodeStyle(tipo: string): React.CSSProperties {
 
 interface Rel { documento_origen_id: string; documento_destino_id: string; tipo_relacion: string }
 
+const REL_LABEL: Record<string, string> = {
+  padre: "Padre de",
+  hijo: "Hijo de",
+  sustituye: "Sustituye a",
+  sustituto: "Sustituye a",
+  sustituido_por: "Sustituido por",
+  referencia: "Referencia",
+  referencia_mutua: "Mutua",
+};
+
+function getEdgeStyle(tipoRelacion: string) {
+  if (tipoRelacion === "referencia_mutua") {
+    return {
+      markerStart: { type: MarkerType.ArrowClosed, color: "#5B9EF0" },
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#5B9EF0" },
+      style: { stroke: "#5B9EF0", strokeDasharray: "4 2" },
+    };
+  }
+  if (tipoRelacion === "padre" || tipoRelacion === "hijo") {
+    return {
+      markerEnd: { type: MarkerType.ArrowClosed, color: "#1BC8A0" },
+      style: { stroke: "#1BC8A0" },
+    };
+  }
+  // referencia simple
+  return {
+    markerEnd: { type: MarkerType.ArrowClosed, color: "#8B90A0" },
+    style: { stroke: "#8B90A0", strokeDasharray: "4 2" },
+  };
+}
+
 export function DocumentosRed() {
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscador, setBuscador] = useState(false);
