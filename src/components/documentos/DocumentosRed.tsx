@@ -56,7 +56,7 @@ export function DocumentosRed() {
       const { data, error } = await supabase
         .from("documentos")
         .select("id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url")
-        .neq("estatus", "eliminado");
+        .in("estatus", ["vigente", "en_revision"]);
       if (error) throw error;
       return data as Documento[];
     },
@@ -77,18 +77,8 @@ export function DocumentosRed() {
     const nodes: Node[] = docs.map((d, i) => ({
       id: d.id,
       position: { x: (i % cols) * 220, y: Math.floor(i / cols) * 130 },
-      data: { label: `${d.codigo}\n${d.nombre.slice(0, 28)}` },
-      style: {
-        background: "#1A1D27",
-        border: `2px solid ${TIPO_COLOR[d.tipo] ?? "#2E3347"}`,
-        borderRadius: 8,
-        color: "#E6E8EE",
-        fontSize: 11,
-        width: 190,
-        padding: 8,
-        whiteSpace: "pre-line" as const,
-        textAlign: "center" as const,
-      },
+      data: { label: `${d.codigo}\n${d.nombre.slice(0, 30)}` },
+      style: getNodeStyle(d.tipo),
     }));
     const edges: Edge[] = rels.map((r, i) => ({
       id: `e${i}`,
