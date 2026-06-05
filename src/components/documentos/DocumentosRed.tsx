@@ -189,6 +189,20 @@ export function DocumentosRed() {
               </span>
             ))}
           </div>
+          <div className="mb-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="h-0 w-6 border-t-2" style={{ borderColor: "#1BC8A0" }} />
+              Padre/Hijo (jerarquía directa)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0 w-6 border-t-2 border-dashed" style={{ borderColor: "#8B90A0" }} />
+              Referencia simple (A menciona a B)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-0 w-6 border-t-2 border-dashed" style={{ borderColor: "#5B9EF0" }} />
+              Referencia mutua (A y B se mencionan) ↔
+            </span>
+          </div>
           <div className="flex-1 overflow-hidden rounded-lg border border-border">
             <ReactFlow
               nodes={nodes}
