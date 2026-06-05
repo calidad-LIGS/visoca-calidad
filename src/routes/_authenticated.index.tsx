@@ -31,6 +31,7 @@ interface Stats {
   docsRevision: number;
   pncAbiertos: number;
   pncVencidos: number;
+  actividadesVencidas: number;
   pncPorEstatus: { name: string; value: number; color: string }[];
   audActivas: number;
   audPorEstatus: { name: string; value: number; color: string }[];
@@ -47,12 +48,19 @@ function DashboardPage() {
   const { data } = useQuery<Stats>({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
-      const [docs, pnc, aud, proy, ev] = await Promise.all([
+      const hoy = new Date().toISOString().slice(0, 10);
+      const [docs, pnc, aud, proy, ev, acts] = await Promise.all([
         supabase.from("documentos").select("estatus"),
         supabase.from("pnc").select("estatus, fecha_compromiso"),
         supabase.from("auditorias").select("estatus"),
         supabase.from("proyectos").select("nombre, estatus, avance_calculado, alta_prioridad"),
         supabase.from("eventos_calendario").select("id, titulo, fecha_inicio, color").gte("fecha_inicio", new Date().toISOString().slice(0, 10)).order("fecha_inicio").limit(6),
+        supabase
+          .from("actividades")
+          .select("id", { count: "exact", head: true })
+          .lt("fecha_fin_plan", hoy)
+          .lt("avance", 100)
+          .neq("estatus", "cancelado"),
       ]);
 
       const docRows = docs.data ?? [];
