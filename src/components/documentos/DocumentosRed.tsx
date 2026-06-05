@@ -16,9 +16,33 @@ import { DocumentoFicha } from "./DocumentoFicha";
 import type { Documento } from "./DocumentoFormDialog";
 import { BuscadorIA } from "./BuscadorIA";
 
+// Color representativo por tipo (para la leyenda y el minimapa)
 const TIPO_COLOR: Record<string, string> = {
-  politica: "#3B7DD8", proceso: "#1BC8A0", manual: "#8B5CF6", formato: "#F5A623", acta: "#E54B4B",
+  politica: "#8B5CF6", proceso: "#1BC8A0", manual: "#3B7DD8", formato: "#242736", acta: "#0F1117",
 };
+
+const BASE_NODE_STYLE: React.CSSProperties = {
+  borderRadius: 8,
+  fontSize: 11,
+  width: 190,
+  padding: 8,
+  whiteSpace: "pre-line",
+  textAlign: "center",
+};
+
+function getNodeStyle(tipo: string): React.CSSProperties {
+  const byTipo: Record<string, React.CSSProperties> = {
+    politica: { backgroundColor: "#8B5CF6", color: "#fff" },
+    proceso: { backgroundColor: "#1BC8A0", color: "#0F1117" },
+    manual: { backgroundColor: "#3B7DD8", color: "#fff" },
+    formato: { backgroundColor: "#242736", border: "1px solid #2E3347", color: "#E8EAF0" },
+    acta: { backgroundColor: "#0F1117", border: "1px solid #555A6B", color: "#8B90A0" },
+  };
+  return {
+    ...BASE_NODE_STYLE,
+    ...(byTipo[tipo] ?? { backgroundColor: "#242736", border: "1px solid #2E3347", color: "#E8EAF0" }),
+  };
+}
 
 interface Rel { documento_origen_id: string; documento_destino_id: string; tipo_relacion: string }
 
@@ -32,7 +56,7 @@ export function DocumentosRed() {
       const { data, error } = await supabase
         .from("documentos")
         .select("id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url")
-        .neq("estatus", "eliminado");
+        .in("estatus", ["vigente", "en_revision"]);
       if (error) throw error;
       return data as Documento[];
     },
@@ -53,18 +77,8 @@ export function DocumentosRed() {
     const nodes: Node[] = docs.map((d, i) => ({
       id: d.id,
       position: { x: (i % cols) * 220, y: Math.floor(i / cols) * 130 },
-      data: { label: `${d.codigo}\n${d.nombre.slice(0, 28)}` },
-      style: {
-        background: "#1A1D27",
-        border: `2px solid ${TIPO_COLOR[d.tipo] ?? "#2E3347"}`,
-        borderRadius: 8,
-        color: "#E6E8EE",
-        fontSize: 11,
-        width: 190,
-        padding: 8,
-        whiteSpace: "pre-line" as const,
-        textAlign: "center" as const,
-      },
+      data: { label: `${d.codigo}\n${d.nombre.slice(0, 30)}` },
+      style: getNodeStyle(d.tipo),
     }));
     const edges: Edge[] = rels.map((r, i) => ({
       id: `e${i}`,
@@ -106,6 +120,17 @@ export function DocumentosRed() {
 
       {docs.length === 0 ? (
         <EmptyState icon={<Network className="h-10 w-10" />} title="No hay documentos para graficar" />
+      ) : rels.length === 0 ? (
+        <EmptyState
+          icon={<Network className="h-10 w-10" />}
+          title="Aún no hay relaciones entre documentos"
+          description="Ábrelos desde la Lista Maestra y agrégalas en la ficha del documento."
+          action={
+            <Button asChild>
+              <Link to="/documentos">Ir a Lista Maestra</Link>
+            </Button>
+          }
+        />
       ) : (
         <>
           <div className="mb-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -128,7 +153,7 @@ export function DocumentosRed() {
             >
               <Background color="#2E3347" gap={20} />
               <Controls />
-              <MiniMap nodeColor={(n) => (n.style?.borderColor as string) ?? "#2E3347"} maskColor="#0F1117cc" />
+              <MiniMap nodeColor={(n) => (n.style?.backgroundColor as string) ?? "#2E3347"} maskColor="#0F1117cc" />
             </ReactFlow>
           </div>
         </>
