@@ -16,9 +16,33 @@ import { DocumentoFicha } from "./DocumentoFicha";
 import type { Documento } from "./DocumentoFormDialog";
 import { BuscadorIA } from "./BuscadorIA";
 
+// Color representativo por tipo (para la leyenda y el minimapa)
 const TIPO_COLOR: Record<string, string> = {
-  politica: "#3B7DD8", proceso: "#1BC8A0", manual: "#8B5CF6", formato: "#F5A623", acta: "#E54B4B",
+  politica: "#8B5CF6", proceso: "#1BC8A0", manual: "#3B7DD8", formato: "#242736", acta: "#0F1117",
 };
+
+const BASE_NODE_STYLE: React.CSSProperties = {
+  borderRadius: 8,
+  fontSize: 11,
+  width: 190,
+  padding: 8,
+  whiteSpace: "pre-line",
+  textAlign: "center",
+};
+
+function getNodeStyle(tipo: string): React.CSSProperties {
+  const byTipo: Record<string, React.CSSProperties> = {
+    politica: { backgroundColor: "#8B5CF6", color: "#fff" },
+    proceso: { backgroundColor: "#1BC8A0", color: "#0F1117" },
+    manual: { backgroundColor: "#3B7DD8", color: "#fff" },
+    formato: { backgroundColor: "#242736", border: "1px solid #2E3347", color: "#E8EAF0" },
+    acta: { backgroundColor: "#0F1117", border: "1px solid #555A6B", color: "#8B90A0" },
+  };
+  return {
+    ...BASE_NODE_STYLE,
+    ...(byTipo[tipo] ?? { backgroundColor: "#242736", border: "1px solid #2E3347", color: "#E8EAF0" }),
+  };
+}
 
 interface Rel { documento_origen_id: string; documento_destino_id: string; tipo_relacion: string }
 
