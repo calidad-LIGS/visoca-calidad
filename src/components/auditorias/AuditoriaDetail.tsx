@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
-  ChevronLeft, Plus, FileText, Download, Lock, ChevronDown, ExternalLink,
+  ChevronLeft, Plus, FileText, Download, Lock, ChevronDown, ExternalLink, Search, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { usePermisos } from "@/lib/permisos";
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { crearHallazgoConPnc } from "@/lib/auditoriaUtils";
+import { addBusinessDays, toISODate } from "@/lib/pncUtils";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
 import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { generarActaBlob, type ActaData } from "./ActaPdf";
@@ -27,6 +28,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { DataTable, Td } from "@/components/common/DataTable";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { StatusBadge, OutlineBadge, AUD_ESTATUS, HALLAZGO_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
 
 const STEPS = ["programada", "en_ejecucion", "con_hallazgos", "en_seguimiento", "cerrada"];
@@ -147,11 +149,52 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
   const [descripcion, setDescripcion] = useState("");
   const [area, setArea] = useState("");
   const [resp, setResp] = useState("");
+  // Proceso afectado
+  const [procesoQuery, setProcesoQuery] = useState("");
+  const [procesoDocId, setProcesoDocId] = useState<string | null>(null);
+  const [procesoDocLabel, setProcesoDocLabel] = useState("");
+  const [procesoTexto, setProcesoTexto] = useState("");
+
+  const { data: docResults = [] } = useQuery({
+    queryKey: ["doc-search", procesoQuery],
+    enabled: procesoQuery.trim().length >= 2 && !procesoDocId,
+    queryFn: async () => {
+      const q = procesoQuery.trim();
+      const { data, error } = await supabase
+        .from("documentos")
+        .select("id, codigo, nombre")
+        .or(`codigo.ilike.%${q}%,nombre.ilike.%${q}%`)
+        .limit(5);
+      if (error) throw error;
+      return data as Array<{ id: string; codigo: string; nombre: string }>;
+    },
+  });
+
+  // Fecha compromiso sugerida (solo informativa)
+  const fechaSugerida =
+    tipo === "nc_mayor"
+      ? `+ 7 días hábiles desde hoy → ${toISODate(addBusinessDays(new Date(), 7))}`
+      : tipo === "nc_menor"
+        ? "Antes de la siguiente auditoría"
+        : "Sin fecha compromiso (oportunidad de mejora)";
+
+  const resetForm = () => {
+    setAdding(false); setDescripcion(""); setArea(""); setResp("");
+    setProcesoQuery(""); setProcesoDocId(null); setProcesoDocLabel(""); setProcesoTexto("");
+  };
 
   const add = useMutation({
     mutationFn: async () => {
       await crearHallazgoConPnc(
-        { auditoria_id: aud.id as string, tipo, descripcion, proceso_documento_id: null, proceso_texto: null, area_id: area || null, responsable_nombre: resp || null },
+        {
+          auditoria_id: aud.id as string,
+          tipo,
+          descripcion,
+          proceso_documento_id: procesoDocId || null,
+          proceso_texto: procesoDocId ? null : (procesoTexto.trim() || null),
+          area_id: area || null,
+          responsable_nombre: resp || null,
+        },
         { tipo: aud.tipo as string, fecha_inicio: aud.fecha_inicio as string | null, empresa_ids: (aud.empresa_ids as string[]) ?? [], creado_por: perfil?.id ?? null },
       );
     },
@@ -160,7 +203,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
       qc.invalidateQueries({ queryKey: ["auditoria", aud.id] });
       qc.invalidateQueries({ queryKey: ["pnc"] });
       toast.success("Hallazgo registrado y PNC generado");
-      setAdding(false); setDescripcion(""); setArea(""); setResp("");
+      resetForm();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -170,33 +213,77 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
       <div className="mb-3 flex items-center justify-between">
         <span className="font-display font-semibold text-foreground">Hallazgos ({hallazgos.length})</span>
         {perms.editarAuditoria && aud.estatus !== "cerrada" && (
-          <Button size="sm" variant="outline" onClick={() => setAdding((v) => !v)}><Plus className="mr-1.5 h-4 w-4" /> Registrar hallazgo</Button>
+          <Button size="sm" variant="outline" onClick={() => (adding ? resetForm() : setAdding(true))}><Plus className="mr-1.5 h-4 w-4" /> Registrar hallazgo</Button>
         )}
       </div>
 
       {adding && (
-        <div className="mb-4 grid grid-cols-1 gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
-          <div className="space-y-1"><Label>Tipo</Label>
-            <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="nc_mayor">NC Mayor</SelectItem>
-                <SelectItem value="nc_menor">NC Menor</SelectItem>
-                <SelectItem value="oportunidad_mejora">Oportunidad</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="mb-4 rounded-md border border-border bg-elevated/40 p-3">
+          <p className="mb-3 font-display text-sm font-semibold text-foreground">Registrar hallazgo</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1"><Label>Tipo</Label>
+              <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nc_mayor">NC Mayor</SelectItem>
+                  <SelectItem value="nc_menor">NC Menor</SelectItem>
+                  <SelectItem value="oportunidad_mejora">Oportunidad de mejora</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1"><Label>Área afectada</Label>
+              <Select value={area} onValueChange={setArea}>
+                <SelectTrigger><SelectValue placeholder="Selecciona…" /></SelectTrigger>
+                <SelectContent>{areas.map((a) => (<SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>))}</SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1 sm:col-span-2"><Label>Descripción</Label><Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></div>
+
+            {/* Proceso afectado */}
+            <div className="space-y-1 sm:col-span-2">
+              <Label>Proceso afectado</Label>
+              {procesoDocId ? (
+                <div className="flex items-center justify-between rounded-md border border-border bg-card px-3 py-2">
+                  <span className="font-mono text-xs text-primary">{procesoDocLabel}</span>
+                  <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => { setProcesoDocId(null); setProcesoDocLabel(""); setProcesoQuery(""); }}>
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input className="pl-8" placeholder="Buscar documento por código o nombre…" value={procesoQuery} onChange={(e) => setProcesoQuery(e.target.value)} />
+                  </div>
+                  {docResults.length > 0 && (
+                    <ul className="mt-1 divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
+                      {docResults.map((d) => (
+                        <li key={d.id}>
+                          <button type="button" className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left hover:bg-elevated"
+                            onClick={() => { setProcesoDocId(d.id); setProcesoDocLabel(`${d.codigo} — ${d.nombre}`); setProcesoTexto(""); }}>
+                            <span className="font-mono text-xs text-primary">{d.codigo}</span>
+                            <span className="text-xs text-muted-foreground">{d.nombre}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Input className="mt-1" placeholder="…o escribe el proceso libremente" value={procesoTexto} onChange={(e) => setProcesoTexto(e.target.value)} />
+                </>
+              )}
+            </div>
+
+            <div className="space-y-1"><Label>Responsable</Label><Input value={resp} onChange={(e) => setResp(e.target.value)} /></div>
+
+            <div className="space-y-1">
+              <Label>Fecha compromiso sugerida</Label>
+              <div className="flex h-9 items-center rounded-md border border-border bg-card px-3 text-xs text-muted-foreground">{fechaSugerida}</div>
+            </div>
           </div>
-          <div className="space-y-1"><Label>Área</Label>
-            <Select value={area} onValueChange={setArea}>
-              <SelectTrigger><SelectValue placeholder="Selecciona…" /></SelectTrigger>
-              <SelectContent>{areas.map((a) => (<SelectItem key={a.id} value={a.id}>{a.nombre}</SelectItem>))}</SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1 sm:col-span-2"><Label>Descripción</Label><Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></div>
-          <div className="space-y-1"><Label>Responsable</Label><Input value={resp} onChange={(e) => setResp(e.target.value)} /></div>
-          <div className="flex items-end gap-2">
+          <div className="mt-3 flex gap-2">
             <Button size="sm" onClick={() => add.mutate()} disabled={!descripcion.trim() || add.isPending}>Guardar hallazgo</Button>
-            <Button size="sm" variant="outline" onClick={() => setAdding(false)}>Cancelar</Button>
+            <Button size="sm" variant="outline" onClick={resetForm}>Cancelar</Button>
           </div>
         </div>
       )}
@@ -208,7 +295,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
             <Td className="max-w-[20rem] truncate text-foreground">{h.descripcion}</Td>
             <Td>{areas.find((a) => a.id === h.area_id)?.nombre ?? "—"}</Td>
             <Td>{h.responsable_nombre ?? "—"}</Td>
-            <Td>{h.pnc ? <button className="font-mono text-xs text-primary hover:underline" onClick={() => navigate({ to: "/no-conformidades", search: { pncId: h.pnc_id ?? "" } })}>{h.pnc.numero_anio}</button> : "—"}</Td>
+            <Td>{h.pnc_id ? <button className="font-mono text-xs text-primary hover:underline" onClick={() => navigate({ to: "/no-conformidades", search: { pncId: h.pnc_id ?? "" } })}>{h.pnc?.numero_anio ?? "PNC"}</button> : "—"}</Td>
             <Td className="text-xs">{h.estatus}</Td>
           </tr>
         ))}
@@ -290,9 +377,18 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       <div className="mb-3 flex items-center justify-between">
         <span className="font-display font-semibold text-foreground">Acta de Resultados</span>
         {perms.exportarActa && (
-          <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-            {acta ? "Regenerar acta" : "Generar Acta de Resultados"}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0}>
+                  <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => setOpen(true)}>
+                    {acta ? "Regenerar acta" : "Generar Acta de Resultados"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {hallazgos.length === 0 && <TooltipContent>Agrega hallazgos primero</TooltipContent>}
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       {acta?.pdf_url ? (
