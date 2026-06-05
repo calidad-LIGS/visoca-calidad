@@ -75,9 +75,18 @@ export const HALLAZGO_TIPO_LABEL: Record<string, string> = {
 
 export const APLICACION_LABEL: Record<string, string> = {
   iso: "ISO 9001:2015",
+  iso_9001: "ISO 9001:2015",
   ola_oea: "OLA/OEA",
   interno: "Interno",
   iso_ola: "ISO + OLA/OEA",
+};
+
+export const NIVEL_LABEL: Record<number, string> = {
+  1: "N1 — Política",
+  2: "N2 — Manual",
+  3: "N3 — Proceso",
+  4: "N4 — Formato",
+  5: "N5 — Acta",
 };
 
 export function StatusBadge({
