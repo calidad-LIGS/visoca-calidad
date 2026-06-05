@@ -154,8 +154,87 @@ export function PncFormDialog({
           <F label="Descripción" full>
             <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
           </F>
-          <F label="Área">
-            <Sel value={area} onChange={setArea} options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
+          <F label="Áreas">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full justify-start font-normal">
+                  {areaIds.length === 0
+                    ? "Selecciona áreas..."
+                    : `${areaIds.length} área${areaIds.length > 1 ? "s" : ""} seleccionada${areaIds.length > 1 ? "s" : ""}`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-2" align="start">
+                <ScrollArea className="h-48">
+                  {areas.length === 0 ? (
+                    <p className="px-2 py-1.5 text-sm text-muted-foreground">No hay áreas disponibles.</p>
+                  ) : (
+                    areas.map((a) => (
+                      <div
+                        key={a.id}
+                        className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-elevated"
+                        onClick={() => toggleArea(a.id)}
+                      >
+                        <Checkbox checked={areaIds.includes(a.id)} />
+                        <span className="text-sm">{a.nombre}</span>
+                      </div>
+                    ))
+                  )}
+                </ScrollArea>
+              </PopoverContent>
+            </Popover>
+            {areaIds.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {areaIds.map((id) => {
+                  const a = areas.find((x) => x.id === id);
+                  return a ? (
+                    <span key={id} className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
+                      {a.nombre}
+                      <button type="button" onClick={() => setAreaIds((prev) => prev.filter((x) => x !== id))} className="hover:text-primary/70">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            )}
+          </F>
+          <F label="Responsables" full>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  value={nuevoResp}
+                  onChange={(e) => setNuevoResp(e.target.value)}
+                  placeholder="Nombre del responsable..."
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addResp(); } }}
+                />
+                <Button type="button" variant="outline" size="icon" onClick={addResp}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <Select value="" onValueChange={(id) => {
+                const u = usuarios.find((x) => x.id === id);
+                if (u && !responsables.includes(u.nombre_completo)) setResponsables((prev) => [...prev, u.nombre_completo]);
+              }}>
+                <SelectTrigger className="text-xs text-muted-foreground">
+                  <SelectValue placeholder="O selecciona un usuario del sistema..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {usuarios.map((u) => <SelectItem key={u.id} value={u.id}>{u.nombre_completo}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              {responsables.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {responsables.map((r, i) => (
+                    <span key={i} className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
+                      {r}
+                      <button type="button" onClick={() => setResponsables((prev) => prev.filter((_, j) => j !== i))} className="hover:text-primary/70">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </F>
           <F label="Razón">
             <Sel value={razon} onChange={setRazon} options={Object.entries(PNC_RAZON_LABEL).map(([value, label]) => ({ value, label }))} />
