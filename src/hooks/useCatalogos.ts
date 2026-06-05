@@ -17,7 +17,7 @@ export function useEmpresas() {
       if (error) throw error;
       return data as Empresa[];
     },
-    staleTime: 60_000,
+    staleTime: 600_000,
   });
 }
 
@@ -32,7 +32,7 @@ export function useAreas() {
       if (error) throw error;
       return data as Area[];
     },
-    staleTime: 60_000,
+    staleTime: 600_000,
   });
 }
 
@@ -47,7 +47,7 @@ export function useCargos() {
       if (error) throw error;
       return data as Cargo[];
     },
-    staleTime: 60_000,
+    staleTime: 600_000,
   });
 }
 
@@ -63,6 +63,6 @@ export function useUsuarios() {
       if (error) throw error;
       return data as UsuarioLite[];
     },
-    staleTime: 60_000,
+    staleTime: 600_000,
   });
 }
