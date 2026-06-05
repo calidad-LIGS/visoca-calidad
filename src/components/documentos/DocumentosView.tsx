@@ -23,7 +23,7 @@ import { DocumentoFicha } from "./DocumentoFicha";
 import { BuscadorIA } from "./BuscadorIA";
 
 const PAGE_SIZE = 25;
-const DOC_COLS = "id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url";
+const DOC_COLS = "id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, aplicacion_arr, comentarios, archivo_url, drive_url";
 
 
 export function DocumentosView() {
@@ -210,7 +210,6 @@ export function DocumentosView() {
         <TabsList>
           <TabsTrigger value="vigentes">Vigentes ({counts.vigentes})</TabsTrigger>
           <TabsTrigger value="todos">Todos ({counts.todos})</TabsTrigger>
-          <TabsTrigger value="revision">En Revisión ({counts.revision})</TabsTrigger>
           <TabsTrigger value="historico">Histórico ({counts.historico})</TabsTrigger>
         </TabsList>
       </Tabs>

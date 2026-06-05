@@ -34,6 +34,7 @@ import {
   DOC_ESTATUS,
   DOC_TIPO_LABEL,
   APLICACION_LABEL,
+  NIVEL_LABEL,
 } from "@/lib/badges";
 import type { Documento } from "./DocumentoFormDialog";
 
@@ -101,10 +102,20 @@ function FichaBody({ doc, onOpenDoc }: { doc: Documento; onOpenDoc?: (id: string
             <Info label="Empresa" value={empresa} />
             <Info label="Área" value={area} />
             <Info label="Versión" value={doc.version ?? "—"} />
-            <Info label="Fecha últ. ed." value={doc.fecha_ultima_edicion ?? "—"} />
-            <Info label="Origen" value={doc.origen ?? "—"} />
-            <Info label="Nivel" value={String(doc.nivel ?? "—")} />
-            <Info label="Aplicación" value={APLICACION_LABEL[doc.aplicacion ?? ""] ?? "—"} />
+            <Info label="Fecha última revisión" value={doc.fecha_ultima_edicion ?? "—"} />
+            <Info label="Nivel" value={doc.nivel ? NIVEL_LABEL[doc.nivel] ?? String(doc.nivel) : "—"} />
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Aplicación</p>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {(doc.aplicacion_arr ?? [doc.aplicacion].filter(Boolean) as string[]).length === 0 ? (
+                  <span className="text-foreground">—</span>
+                ) : (
+                  (doc.aplicacion_arr ?? [doc.aplicacion].filter(Boolean) as string[]).map((a) => (
+                    <OutlineBadge key={a}>{APLICACION_LABEL[a] ?? a}</OutlineBadge>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
           {doc.comentarios && (
             <div>
