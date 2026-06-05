@@ -210,7 +210,6 @@ export function DocumentosView() {
         <TabsList>
           <TabsTrigger value="vigentes">Vigentes ({counts.vigentes})</TabsTrigger>
           <TabsTrigger value="todos">Todos ({counts.todos})</TabsTrigger>
-          <TabsTrigger value="revision">En Revisión ({counts.revision})</TabsTrigger>
           <TabsTrigger value="historico">Histórico ({counts.historico})</TabsTrigger>
         </TabsList>
       </Tabs>
