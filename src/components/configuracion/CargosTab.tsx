@@ -57,7 +57,7 @@ export function CargosTab() {
         .from("cargo_areas")
         .select("area_id")
         .eq("cargo_id", editing!.id);
-      return (data ?? []).map((r) => r.area_id);
+      return (data ?? []).map((r) => r.area_id).filter((id): id is string => !!id);
     },
   });
 
