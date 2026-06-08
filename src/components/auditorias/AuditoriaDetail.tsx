@@ -449,7 +449,9 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
               <TooltipTrigger asChild>
                 <span tabIndex={0}>
                   <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => setOpen(true)}>
-                    {acta ? "Regenerar acta" : "Generar Acta de Resultados"}
+                    {acta ? "Regenerar actas" : deptosUnicos.length > 1
+                      ? `Generar Actas por Departamento (${deptosUnicos.length})`
+                      : "Generar Acta de Resultados"}
                   </Button>
                 </span>
               </TooltipTrigger>
