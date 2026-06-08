@@ -147,7 +147,7 @@ export function PncView() {
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard label="Total abiertos" value={kpis.abiertos} accent="primary" />
         <KpiCard label="Vencidos" value={kpis.vencidos} accent="danger" sub="Requieren atención" />
-        <KpiCard label="En verificación" value={kpis.verificacion} accent="warning" />
+        <KpiCard label="Cerrados (total)" value={kpis.cerrados} accent="accent" />
         <KpiCard label="Cerrados este mes" value={kpis.cerradosMes} accent="accent" />
       </div>
 
