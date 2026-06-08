@@ -87,12 +87,12 @@ function Body({ pncId }: { pncId: string }) {
       <Tabs defaultValue="registro">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="registro">Registro</TabsTrigger>
-          <TabsTrigger value="plan">Plan</TabsTrigger>
+          <TabsTrigger value="acciones">Acciones</TabsTrigger>
           <TabsTrigger value="evid">Evidencias</TabsTrigger>
           <TabsTrigger value="hist">Historial</TabsTrigger>
         </TabsList>
         <TabsContent value="registro" className="pt-4"><RegistroTab pnc={pnc} /></TabsContent>
-        <TabsContent value="plan" className="pt-4"><PlanTab pnc={pnc} /></TabsContent>
+        <TabsContent value="acciones" className="pt-4"><AccionesPlan pncId={pnc.id} /></TabsContent>
         <TabsContent value="evid" className="pt-4"><EvidenciasTab pnc={pnc} /></TabsContent>
         <TabsContent value="hist" className="pt-4"><HistorialTab pncId={pnc.id} /></TabsContent>
       </Tabs>
