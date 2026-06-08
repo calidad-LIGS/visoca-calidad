@@ -203,7 +203,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
         : "Sin fecha compromiso (oportunidad de mejora)";
 
   const resetForm = () => {
-    setAdding(false); setDescripcion(""); setArea(""); setResp("");
+    setAdding(false); setDescripcion(""); setDepto(""); setArea(""); setResp("");
     setProcesoQuery(""); setProcesoDocId(null); setProcesoDocLabel(""); setProcesoTexto("");
   };
 
