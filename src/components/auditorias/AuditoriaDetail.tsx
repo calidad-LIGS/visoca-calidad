@@ -255,11 +255,44 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1 sm:col-span-2">
               <Label>Departamento auditado</Label>
-              <Input
-                value={depto}
-                onChange={(e) => setDepto(e.target.value)}
-                placeholder="Ej: Administración, Facturación, Logística..."
-              />
+              {deptosExistentes.length === 0 || nuevoDepto ? (
+                <div className="flex gap-2">
+                  <Input
+                    className="flex-1"
+                    value={depto}
+                    onChange={(e) => setDepto(e.target.value)}
+                    placeholder="Ej: Administración, Facturación..."
+                    autoFocus={nuevoDepto}
+                  />
+                  {deptosExistentes.length > 0 && (
+                    <Button
+                      type="button" size="sm" variant="outline"
+                      onClick={() => { setNuevoDepto(false); setDepto(""); }}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Select value={depto} onValueChange={setDepto}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder="Selecciona un departamento..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deptosExistentes.map((d) => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    type="button" size="sm" variant="outline"
+                    onClick={() => { setNuevoDepto(true); setDepto(""); }}
+                  >
+                    + Nuevo
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="space-y-1"><Label>Tipo</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
