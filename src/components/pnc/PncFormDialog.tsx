@@ -45,7 +45,7 @@ export function PncFormDialog({
   const [procesoDocId, setProcesoDocId] = useState<string>("");
   const [procesoTexto, setProcesoTexto] = useState("");
   const [razon, setRazon] = useState("nc_menor");
-  const [metodologia, setMetodologia] = useState("na");
+  
   const [fechaOrigen, setFechaOrigen] = useState(toISODate(new Date()));
   const [fechaCompromiso, setFechaCompromiso] = useState("");
   const [observaciones, setObservaciones] = useState("");
