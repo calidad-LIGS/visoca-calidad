@@ -160,6 +160,7 @@ export type Database = {
           id: string
           pdf_url: string | null
           responsable_nombre: string | null
+          tipo_generacion: string | null
         }
         Insert: {
           auditoria_id: string
@@ -171,6 +172,7 @@ export type Database = {
           id?: string
           pdf_url?: string | null
           responsable_nombre?: string | null
+          tipo_generacion?: string | null
         }
         Update: {
           auditoria_id?: string
@@ -182,6 +184,7 @@ export type Database = {
           id?: string
           pdf_url?: string | null
           responsable_nombre?: string | null
+          tipo_generacion?: string | null
         }
         Relationships: [
           {
@@ -204,46 +207,64 @@ export type Database = {
         Row: {
           area_id: string | null
           auditoria_id: string
+          cerrado: boolean | null
+          compromiso: string | null
           created_at: string
           departamento: string | null
           descripcion: string
           estatus: string
+          fecha_compromiso: string | null
+          fecha_subsanacion: string | null
           id: string
+          plan_mejora_url: string | null
           pnc_id: string | null
           proceso_documento_id: string | null
           proceso_texto: string | null
           responsable_nombre: string | null
           responsable_usuario_id: string | null
+          subsanacion: string | null
           tipo: string
         }
         Insert: {
           area_id?: string | null
           auditoria_id: string
+          cerrado?: boolean | null
+          compromiso?: string | null
           created_at?: string
           departamento?: string | null
           descripcion: string
           estatus?: string
+          fecha_compromiso?: string | null
+          fecha_subsanacion?: string | null
           id?: string
+          plan_mejora_url?: string | null
           pnc_id?: string | null
           proceso_documento_id?: string | null
           proceso_texto?: string | null
           responsable_nombre?: string | null
           responsable_usuario_id?: string | null
+          subsanacion?: string | null
           tipo: string
         }
         Update: {
           area_id?: string | null
           auditoria_id?: string
+          cerrado?: boolean | null
+          compromiso?: string | null
           created_at?: string
           departamento?: string | null
           descripcion?: string
           estatus?: string
+          fecha_compromiso?: string | null
+          fecha_subsanacion?: string | null
           id?: string
+          plan_mejora_url?: string | null
           pnc_id?: string | null
           proceso_documento_id?: string | null
           proceso_texto?: string | null
           responsable_nombre?: string | null
           responsable_usuario_id?: string | null
+          subsanacion?: string | null
           tipo?: string
         }
         Relationships: [
