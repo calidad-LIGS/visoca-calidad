@@ -1288,6 +1288,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_quality_manager: { Args: { _uid: string }; Returns: boolean }
+      is_quality_or_auditor: { Args: { _uid: string }; Returns: boolean }
+      is_quality_staff: { Args: { _uid: string }; Returns: boolean }
     }
     Enums: {
       app_role:
