@@ -518,9 +518,9 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span tabIndex={0}>
-                  <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => setOpen(true)}>
-                    {acta ? "Regenerar actas" : deptosUnicos.length > 1
-                      ? `Generar Actas por Departamento (${deptosUnicos.length})`
+                  <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => { setPaso(1); setOpen(true); }}>
+                    {acta ? "Regenerar acta" : deptosConHallazgos.length > 1
+                      ? `Generar Acta por Departamento (${deptosConHallazgos.length})`
                       : "Generar Acta de Resultados"}
                   </Button>
                 </span>
@@ -538,16 +538,123 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Generar Acta de Resultados</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5"><Label>Departamento auditado</Label><Input value={departamento} onChange={(e) => setDepartamento(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>Responsable del área</Label><Input value={responsable} onChange={(e) => setResponsable(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>Descripción de la auditoría</Label><Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={generar} disabled={generating}>{generating ? "Generando…" : "Generar PDF"}</Button>
-          </DialogFooter>
+          <DialogHeader>
+            <DialogTitle>{paso === 1 ? "Generar Acta de Resultados" : "Compromisos y subsanación"}</DialogTitle>
+          </DialogHeader>
+
+          {paso === 1 && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label>Selecciona el departamento</Label>
+                <Select value={deptoSelec} onValueChange={setDeptoSelec}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un departamento con hallazgos..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deptosConHallazgos.map((d) => (
+                      <SelectItem key={d} value={d}>{d} ({hallazgos.filter(h => ((h as {departamento?:string}).departamento?.trim()||"General") === d).length} hallazgos)</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Responsable del área</Label>
+                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Descripción de la auditoría (para el acta)</Label>
+                <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Modo de generación</Label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer rounded-md border border-border p-3 hover:bg-elevated">
+                    <input type="radio" name="modo" value="sin_compromiso"
+                      checked={modo === "sin_compromiso"}
+                      onChange={() => setModo("sin_compromiso")} />
+                    <div>
+                      <p className="text-sm font-medium">Sin compromisos</p>
+                      <p className="text-xs text-muted-foreground">Genera el acta con hallazgos en estado "Pendiente" sin compromisos definidos</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer rounded-md border border-border p-3 hover:bg-elevated">
+                    <input type="radio" name="modo" value="con_compromiso"
+                      checked={modo === "con_compromiso"}
+                      onChange={() => setModo("con_compromiso")} />
+                    <div>
+                      <p className="text-sm font-medium">Con compromisos y subsanación</p>
+                      <p className="text-xs text-muted-foreground">Permite redactar el compromiso y subsanación por cada hallazgo</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button
+                  disabled={!deptoSelec || generating}
+                  onClick={() => modo === "con_compromiso" ? setPaso(2) : generar()}
+                >
+                  {modo === "con_compromiso" ? "Siguiente →" : (generating ? "Generando…" : "Generar acta")}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+
+          {paso === 2 && (
+            <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
+              <p className="text-sm font-medium">Departamento: <span className="text-primary">{deptoSelec}</span> — {hallazgosDepto.length} hallazgos</p>
+              {hallazgosDepto.map((h, i) => {
+                const hid = h.id ?? h.descripcion;
+                return (
+                  <div key={hid} className="rounded-md border border-border p-3 space-y-2">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Hallazgo {i + 1} — {h.tipo}</p>
+                    <p className="text-sm text-foreground">{h.descripcion}</p>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Compromiso / Acción correctiva</Label>
+                      <Textarea
+                        value={compromisos[hid]?.compromiso || ""}
+                        onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], compromiso: e.target.value }}))}
+                        placeholder="Describe el compromiso adquirido..."
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Subsanación del responsable</Label>
+                      <Textarea
+                        value={compromisos[hid]?.subsanacion || ""}
+                        onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], subsanacion: e.target.value }}))}
+                        placeholder="¿Cómo se subsanó o se subsanará?"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Responsable</Label>
+                        <Input
+                          value={compromisos[hid]?.responsable || ""}
+                          onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], responsable: e.target.value }}))}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Fecha compromiso</Label>
+                        <Input
+                          type="date"
+                          value={compromisos[hid]?.fechaCompromiso || ""}
+                          onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], fechaCompromiso: e.target.value }}))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPaso(1)}>← Volver</Button>
+                <Button onClick={generar} disabled={generating}>
+                  {generating ? "Generando…" : "Generar acta"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
