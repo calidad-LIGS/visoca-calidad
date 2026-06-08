@@ -74,7 +74,7 @@ export function PncFormDialog({
       setEmpresa(""); setDescripcion(""); setOrigen("manual"); setAreaIds([]);
       setResponsables([]); setNuevoResp("");
       setProcesoBusqueda(""); setProcesoDocId(""); setProcesoTexto("");
-      setRazon("nc_menor"); setMetodologia("na");
+      setRazon("nc_menor");
       setFechaOrigen(toISODate(new Date())); setFechaCompromiso(""); setObservaciones("");
     }
   }, [open]);
