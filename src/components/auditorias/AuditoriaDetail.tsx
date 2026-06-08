@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable, Td } from "@/components/common/DataTable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { StatusBadge, OutlineBadge, AUD_ESTATUS, HALLAZGO_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
+import { StatusBadge, OutlineBadge, AUD_ESTATUS, HALLAZGO_TIPO_LABEL } from "@/lib/badges";
 
 const STEPS = ["programada", "en_ejecucion", "con_hallazgos", "en_seguimiento", "cerrada"];
 
@@ -346,6 +346,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   areas: { id: string; nombre: string }[];
 }) {
   void areas;
+  void empresaNombres;
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const perms = usePermisos();
@@ -367,45 +368,66 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const generar = async () => {
     setGenerating(true);
     try {
-      const fechaHoy = new Date().toISOString().slice(0, 10);
-      const data: ActaData = {
-        codigo: `ACTA-${aud.codigo_auditoria as string}`,
-        version: "1.0",
-        entradaVigor: (aud.fecha_inicio as string) ?? fechaHoy,
-        ultimaRevision: fechaHoy,
-        aplicacion: APLICACION_LABEL["iso_ola"],
-        codigoAuditoria: aud.codigo_auditoria as string,
-        descripcionAuditoria: `Auditoría ${aud.tipo} — ${empresaNombres} (${aud.fecha_inicio ?? ""} → ${aud.fecha_fin ?? ""})`,
-        departamento,
-        responsable,
-        fecha: fechaHoy,
-        hallazgos: hallazgos.map((h) => ({
-          tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
-          descripcion: h.descripcion,
-          responsable: h.responsable_nombre ?? responsable,
-          compromiso: "Acción correctiva",
-          fechaCompromiso: (aud.fecha_fin as string) ?? "",
-          estatus: h.estatus,
-        })),
-        orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
-        orgLogoUrl: orgConfig?.logo_url ?? null,
-        jefeCalidadNombre: perfil?.nombre_completo ?? "—",
-        jefeCalidadPuesto: "Jefe de Calidad",
-      };
-      const blob = await generarActaBlob(data);
-      const file = new File([blob], `acta-${aud.codigo_auditoria}.pdf`, { type: "application/pdf" });
-      const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/acta-${Date.now()}.pdf`;
-      const res = await uploadFile("auditorias", path, file);
-      const { error } = await supabase.from("auditoria_actas").insert({
-        auditoria_id: aud.id as string, departamento, responsable_nombre: responsable,
-        fecha_acta: data.fecha, contenido_json: JSON.parse(JSON.stringify(data)),
-        pdf_url: res.path, generado_por: perfil?.id ?? null,
-      });
-      if (error) throw error;
+      // Agrupar hallazgos por departamento
+      const porDepto = hallazgos.reduce<Record<string, typeof hallazgos>>((acc, h) => {
+        const depto = (h as { departamento?: string }).departamento?.trim() || "General";
+        if (!acc[depto]) acc[depto] = [];
+        acc[depto].push(h);
+        return acc;
+      }, {});
+      const deptos = Object.keys(porDepto);
+      for (const depto of deptos) {
+        const hDepto = porDepto[depto];
+        const data: ActaData = {
+          codigo: "LIGS-CAL-04-F03",
+          version: "01",
+          entradaVigor: "Abril 2023",
+          ultimaRevision: "Diciembre 2025",
+          aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
+          codigoAuditoria: aud.codigo_auditoria as string,
+          descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
+          departamento: depto,
+          responsable: responsable,
+          fecha: new Date().toISOString().slice(0, 10),
+          hallazgos: hDepto.map((h) => ({
+            tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
+            descripcion: h.descripcion,
+            compromiso: "Acción correctiva según plan de mejora",
+            fechaCompromiso: h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría",
+            responsable: h.responsable_nombre || responsable,
+            estatus: h.estatus,
+          })),
+          orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
+          orgLogoUrl: orgConfig?.logo_url ?? null,
+          jefeCalidadNombre: "Ing. Sousthy M. De la Cruz Gavilla",
+          jefeCalidadPuesto: "Jefe de Calidad",
+        };
+        const blob = await generarActaBlob(data);
+        // Descargar en el navegador
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `acta-${aud.codigo_auditoria}-${depto.replace(/\s+/g, "_")}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        // Guardar en BD y Storage
+        const file = new File([blob], a.download, { type: "application/pdf" });
+        const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/${depto.replace(/\s+/g, "_")}-${Date.now()}.pdf`;
+        const res = await uploadFile("auditorias", path, file);
+        await supabase.from("auditoria_actas").insert({
+          auditoria_id: aud.id as string,
+          departamento: depto,
+          responsable_nombre: responsable,
+          fecha_acta: data.fecha,
+          contenido_json: JSON.parse(JSON.stringify(data)),
+          pdf_url: res.path,
+          generado_por: perfil?.id ?? null,
+        });
+      }
       await supabase.from("auditorias").update({ estatus: "en_seguimiento" }).eq("id", aud.id as string);
       qc.invalidateQueries({ queryKey: ["acta", aud.id] });
       qc.invalidateQueries({ queryKey: ["auditoria", aud.id] });
-      toast.success("Acta generada");
+      toast.success(deptos.length > 1 ? `${deptos.length} actas generadas` : "Acta generada");
       setOpen(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -413,6 +435,10 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       setGenerating(false);
     }
   };
+
+  const deptosUnicos = [...new Set(
+    hallazgos.map((h) => (h as { departamento?: string }).departamento?.trim() || "General")
+  )];
 
   return (
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
@@ -424,7 +450,9 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
               <TooltipTrigger asChild>
                 <span tabIndex={0}>
                   <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => setOpen(true)}>
-                    {acta ? "Regenerar acta" : "Generar Acta de Resultados"}
+                    {acta ? "Regenerar actas" : deptosUnicos.length > 1
+                      ? `Generar Actas por Departamento (${deptosUnicos.length})`
+                      : "Generar Acta de Resultados"}
                   </Button>
                 </span>
               </TooltipTrigger>
