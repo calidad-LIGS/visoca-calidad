@@ -137,9 +137,9 @@ function FichaBody({ doc, onOpenDoc }: { doc: Documento; onOpenDoc?: (id: string
                 </SignedFileLink>
               </>
             )}
-            {doc.drive_url && (
+            {safeExternalUrl(doc.drive_url) && (
               <Button asChild size="sm" variant="outline">
-                <a href={doc.drive_url} target="_blank" rel="noreferrer">
+                <a href={safeExternalUrl(doc.drive_url)!} target="_blank" rel="noreferrer">
                   <ExternalLink className="mr-1.5 h-4 w-4" /> Abrir en Drive
                 </a>
               </Button>
