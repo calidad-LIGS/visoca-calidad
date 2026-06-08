@@ -15,10 +15,8 @@ export const DOC_ESTATUS: Record<string, BadgeConfig & { style: React.CSSPropert
 };
 
 export const PNC_ESTATUS: Record<string, BadgeConfig & { style: React.CSSProperties }> = {
-  pendiente: { label: "Pendiente", className: "", style: chip("#555A6B", "#FFFFFF") },
-  en_proceso: { label: "En proceso", className: "", style: chip("#3B7DD8", "#FFFFFF") },
-  verificacion: { label: "Verificación", className: "", style: chip("#F5A623", "#0F1117") },
-  finalizado: { label: "Finalizado", className: "", style: chip("#1BC8A0", "#0F1117") },
+  pendiente: { label: "Pendiente", className: "", style: chip("#555A6B", "#E8EAF0") },
+  cerrado: { label: "Cerrado", className: "", style: chip("#1BC8A0", "#0F1117") },
 };
 
 export const AUD_ESTATUS: Record<string, BadgeConfig & { style: React.CSSProperties }> = {
