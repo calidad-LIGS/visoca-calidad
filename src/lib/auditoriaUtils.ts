@@ -11,6 +11,7 @@ interface HallazgoInput {
   auditoria_id: string;
   tipo: "nc_mayor" | "nc_menor" | "oportunidad_mejora";
   descripcion: string;
+  departamento: string | null;
   proceso_documento_id: string | null;
   proceso_texto: string | null;
   area_id: string | null;
@@ -81,6 +82,7 @@ export async function crearHallazgoConPnc(h: HallazgoInput, aud: AuditoriaCtx) {
       auditoria_id: h.auditoria_id,
       tipo: h.tipo,
       descripcion: h.descripcion,
+      departamento: h.departamento,
       proceso_documento_id: h.proceso_documento_id,
       proceso_texto: h.proceso_texto,
       area_id: h.area_id,

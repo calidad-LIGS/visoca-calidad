@@ -57,7 +57,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
     queryFn: async () => {
       const { data, error } = await supabase.from("auditoria_hallazgos").select("*, pnc:pnc_id(numero_anio)").eq("auditoria_id", id).order("created_at");
       if (error) throw error;
-      return data as Array<{ id: string; tipo: string; descripcion: string; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }>;
+      return data as Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }>;
     },
   });
 
@@ -161,7 +161,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
   }
 }
 
-function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }> }) {
+function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }> }) {
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const perms = usePermisos();
@@ -170,6 +170,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
   const [adding, setAdding] = useState(false);
   const [tipo, setTipo] = useState<"nc_mayor" | "nc_menor" | "oportunidad_mejora">("nc_menor");
   const [descripcion, setDescripcion] = useState("");
+  const [depto, setDepto] = useState("");
   const [area, setArea] = useState("");
   const [resp, setResp] = useState("");
   // Proceso afectado
@@ -202,7 +203,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
         : "Sin fecha compromiso (oportunidad de mejora)";
 
   const resetForm = () => {
-    setAdding(false); setDescripcion(""); setArea(""); setResp("");
+    setAdding(false); setDescripcion(""); setDepto(""); setArea(""); setResp("");
     setProcesoQuery(""); setProcesoDocId(null); setProcesoDocLabel(""); setProcesoTexto("");
   };
 
@@ -213,6 +214,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
           auditoria_id: aud.id as string,
           tipo,
           descripcion,
+          departamento: depto.trim() || null,
           proceso_documento_id: procesoDocId || null,
           proceso_texto: procesoDocId ? null : (procesoTexto.trim() || null),
           area_id: area || null,
@@ -244,6 +246,14 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
         <div className="mb-4 rounded-md border border-border bg-elevated/40 p-3">
           <p className="mb-3 font-display text-sm font-semibold text-foreground">Registrar hallazgo</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1 sm:col-span-2">
+              <Label>Departamento auditado</Label>
+              <Input
+                value={depto}
+                onChange={(e) => setDepto(e.target.value)}
+                placeholder="Ej: Administración, Facturación, Logística..."
+              />
+            </div>
             <div className="space-y-1"><Label>Tipo</Label>
               <Select value={tipo} onValueChange={(v) => setTipo(v as typeof tipo)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -311,10 +321,11 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
         </div>
       )}
 
-      <DataTable headers={["Tipo", "Descripción", "Área", "Responsable", "PNC", "Estatus"]} isEmpty={hallazgos.length === 0} empty="Sin hallazgos registrados en esta auditoría.">
+      <DataTable headers={["Tipo", "Departamento", "Descripción", "Área", "Responsable", "PNC", "Estatus"]} isEmpty={hallazgos.length === 0} empty="Sin hallazgos registrados en esta auditoría.">
         {hallazgos.map((h) => (
           <tr key={h.id}>
             <Td><OutlineBadge>{HALLAZGO_TIPO_LABEL[h.tipo]}</OutlineBadge></Td>
+            <Td>{h.departamento || "—"}</Td>
             <Td className="max-w-[20rem] truncate text-foreground">{h.descripcion}</Td>
             <Td>{areas.find((a) => a.id === h.area_id)?.nombre ?? "—"}</Td>
             <Td>{h.responsable_nombre ?? "—"}</Td>
