@@ -57,7 +57,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
     queryFn: async () => {
       const { data, error } = await supabase.from("auditoria_hallazgos").select("*, pnc:pnc_id(numero_anio)").eq("auditoria_id", id).order("created_at");
       if (error) throw error;
-      return data as Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }>;
+      return data as Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; cerrado?: boolean; plan_mejora_url?: string | null; pnc: { numero_anio: string } | null }>;
     },
   });
 
@@ -150,6 +150,8 @@ export function AuditoriaDetail({ id }: { id: string }) {
 
       <ActaSection aud={aud} hallazgos={hallazgos} acta={acta} empresaNombres={empresaNombres} areas={areas} />
 
+      <CierreHallazgosSection aud={aud} hallazgos={hallazgos} />
+
       <CierreSection aud={aud} />
 
       <div className="h-10" />
@@ -161,7 +163,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
   }
 }
 
-function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }> }) {
+function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; hallazgos: Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; cerrado?: boolean; plan_mejora_url?: string | null; pnc: { numero_anio: string } | null }> }) {
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const perms = usePermisos();
@@ -657,6 +659,135 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function CierreHallazgosSection({ aud, hallazgos }: {
+  aud: Record<string, unknown>;
+  hallazgos: Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; responsable_nombre: string | null; estatus: string; cerrado?: boolean; plan_mejora_url?: string | null; }>;
+}) {
+  const qc = useQueryClient();
+  const perms = usePermisos();
+  const [seleccionados, setSeleccionados] = useState<Record<string, boolean>>({});
+  const [planFile, setPlanFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const hallazgosAbiertos = hallazgos.filter(h => !h.cerrado && h.estatus !== "cerrado");
+
+  if (hallazgosAbiertos.length === 0) {
+    return (
+      <div className="mb-6 rounded-lg border border-accent/30 bg-accent/10 p-4 text-sm text-accent">
+        ✓ Todos los hallazgos han sido cerrados.
+      </div>
+    );
+  }
+
+  if (!perms.editarAuditoria) return null;
+
+  const toggleAll = (val: boolean) => {
+    const next: Record<string, boolean> = {};
+    hallazgosAbiertos.forEach(h => { next[h.id] = val; });
+    setSeleccionados(next);
+  };
+
+  const cerrarSeleccionados = async () => {
+    const ids = Object.entries(seleccionados).filter(([, v]) => v).map(([k]) => k);
+    if (ids.length === 0) { toast.error("Selecciona al menos un hallazgo"); return; }
+    setUploading(true);
+    try {
+      let planUrl: string | null = null;
+      if (planFile) {
+        const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/plan-mejora-${Date.now()}.pdf`;
+        const res = await uploadFile("auditorias", path, planFile);
+        planUrl = res.path;
+      }
+      await supabase
+        .from("auditoria_hallazgos")
+        .update({ estatus: "cerrado", cerrado: true, plan_mejora_url: planUrl })
+        .in("id", ids);
+
+      // También cerrar los PNC vinculados si existen
+      const { data: hData } = await supabase
+        .from("auditoria_hallazgos")
+        .select("pnc_id")
+        .in("id", ids)
+        .not("pnc_id", "is", null);
+
+      const pncIds = (hData ?? []).map(h => h.pnc_id).filter(Boolean);
+      if (pncIds.length > 0) {
+        await supabase
+          .from("pnc")
+          .update({ estatus: "verificacion" })
+          .in("id", pncIds as string[]);
+      }
+
+      qc.invalidateQueries({ queryKey: ["hallazgos", aud.id] });
+      qc.invalidateQueries({ queryKey: ["pnc"] });
+      toast.success(`${ids.length} hallazgo${ids.length > 1 ? "s" : ""} cerrado${ids.length > 1 ? "s" : ""}`);
+      setSeleccionados({});
+      setPlanFile(null);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="mb-6 rounded-lg border border-border bg-card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="font-display font-semibold text-foreground">
+          Cierre de hallazgos ({hallazgosAbiertos.length} pendientes)
+        </span>
+        <div className="flex gap-2">
+          <Button size="sm" variant="ghost" onClick={() => toggleAll(true)}>Seleccionar todos</Button>
+          <Button size="sm" variant="ghost" onClick={() => toggleAll(false)}>Limpiar</Button>
+        </div>
+      </div>
+      <div className="space-y-2 mb-4">
+        {hallazgosAbiertos.map((h) => (
+          <label key={h.id}
+            className="flex items-start gap-3 rounded-md border border-border p-3 cursor-pointer hover:bg-elevated">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={seleccionados[h.id] || false}
+              onChange={(e) => setSeleccionados(prev => ({ ...prev, [h.id]: e.target.checked }))}
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-xs font-semibold uppercase text-muted-foreground">{h.tipo}</span>
+                {h.departamento && <span className="text-xs text-primary">{h.departamento}</span>}
+              </div>
+              <p className="text-sm text-foreground">{h.descripcion}</p>
+              {h.responsable_nombre && (
+                <p className="text-xs text-muted-foreground mt-0.5">Resp: {h.responsable_nombre}</p>
+              )}
+            </div>
+          </label>
+        ))}
+      </div>
+      <div className="mb-4">
+        <Label className="text-sm mb-1.5 block">Plan de mejora (archivo PDF — opcional)</Label>
+        <Input
+          type="file"
+          accept=".pdf"
+          onChange={(e) => setPlanFile(e.target.files?.[0] ?? null)}
+          className="text-sm"
+        />
+        {planFile && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Archivo seleccionado: {planFile.name}
+          </p>
+        )}
+      </div>
+      <Button
+        size="sm"
+        onClick={cerrarSeleccionados}
+        disabled={uploading || Object.values(seleccionados).every(v => !v)}
+      >
+        {uploading ? "Cerrando…" : `Cerrar hallazgos seleccionados${Object.values(seleccionados).filter(Boolean).length > 0 ? ` (${Object.values(seleccionados).filter(Boolean).length})` : ""}`}
+      </Button>
     </div>
   );
 }
