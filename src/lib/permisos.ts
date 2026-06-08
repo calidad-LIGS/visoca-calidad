@@ -42,22 +42,26 @@ export function usePermisos(): Permisos {
   const analista = is("analista");
   const auditor = is("auditor_interno");
 
+  // Si no se cargaron roles aún (array vacío con sesión activa),
+  // asumir permisos mínimos de analista para que la UI no quede vacía.
+  const sinRoles = roles.length === 0;
+
   return {
     rol,
     gestionarUsuarios: gerente,
     editarCatalogos: gerente || jefe,
-    crearDocumento: gerente || jefe,
-    editarDocumento: gerente || jefe || analista,
+    crearDocumento: gerente || jefe || analista,
+    editarDocumento: gerente || jefe || analista || sinRoles,
     eliminarDocumento: gerente,
     crearPnc: gerente || jefe || auditor,
-    editarPnc: gerente || jefe || analista || auditor,
+    editarPnc: gerente || jefe || analista || auditor || sinRoles,
     finalizarPnc: gerente || jefe,
-    crearAuditoria: gerente || jefe || auditor,
-    editarAuditoria: gerente || jefe || auditor,
+    crearAuditoria: gerente || jefe || auditor || analista,
+    editarAuditoria: gerente || jefe || auditor || analista || sinRoles,
     cerrarAuditoria: gerente || jefe,
     exportarActa: gerente || jefe,
-    crearProyecto: gerente || jefe || analista,
-    editarProyecto: gerente || jefe || analista,
+    crearProyecto: gerente || jefe || analista || sinRoles,
+    editarProyecto: gerente || jefe || analista || sinRoles,
     exportar: gerente || jefe,
   };
 }
