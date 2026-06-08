@@ -171,6 +171,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
   const [tipo, setTipo] = useState<"nc_mayor" | "nc_menor" | "oportunidad_mejora">("nc_menor");
   const [descripcion, setDescripcion] = useState("");
   const [depto, setDepto] = useState("");
+  const [nuevoDepto, setNuevoDepto] = useState(false);
   const [area, setArea] = useState("");
   const [resp, setResp] = useState("");
   // Proceso afectado
@@ -178,6 +179,12 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
   const [procesoDocId, setProcesoDocId] = useState<string | null>(null);
   const [procesoDocLabel, setProcesoDocLabel] = useState("");
   const [procesoTexto, setProcesoTexto] = useState("");
+
+  const deptosExistentes = [...new Set(
+    hallazgos
+      .map((h) => h.departamento?.trim())
+      .filter(Boolean)
+  )] as string[];
 
   const { data: docResults = [] } = useQuery({
     queryKey: ["doc-search", procesoQuery],
@@ -203,7 +210,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
         : "Sin fecha compromiso (oportunidad de mejora)";
 
   const resetForm = () => {
-    setAdding(false); setDescripcion(""); setDepto(""); setArea(""); setResp("");
+    setAdding(false); setDescripcion(""); setDepto(""); setNuevoDepto(false); setArea(""); setResp("");
     setProcesoQuery(""); setProcesoDocId(null); setProcesoDocLabel(""); setProcesoTexto("");
   };
 
