@@ -445,6 +445,10 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const generar = async () => {
     setGenerating(true);
     try {
+      const conCompromiso = modo === "con_compromiso";
+      const responsableActa = conCompromiso
+        ? (responsable || "Por definir")
+        : ((aud.auditor_lider_id as string | null) || "Por definir");
       const data: ActaData = {
         codigo: "LIGS-CAL-04-F03",
         version: "01",
@@ -452,23 +456,23 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
         ultimaRevision: "Diciembre 2025",
         aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
         codigoAuditoria: aud.codigo_auditoria as string,
-        descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
+        descripcionAuditoria: `realizada del ${aud.fecha_inicio ?? "—"} al ${aud.fecha_fin ?? "—"}`,
         departamento: deptoSelec,
-        responsable: responsable,
+        responsable: responsableActa,
         fecha: new Date().toISOString().slice(0, 10),
+        subsanacion: conCompromiso ? (subsanacion || "") : "",
         hallazgos: hallazgosDepto.map((h) => {
           const hid = h.id ?? h.descripcion;
           const comp = compromisos[hid];
+          const fechaDefault = h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría";
           return {
             tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
             descripcion: h.descripcion,
-            compromiso: modo === "con_compromiso" ? (comp?.compromiso || "—") : "Pendiente de definir",
-            subsanacion: modo === "con_compromiso" ? (comp?.subsanacion || "") : "",
-            fechaCompromiso: modo === "con_compromiso"
-              ? (comp?.fechaCompromiso || (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"))
-              : (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"),
-            responsable: modo === "con_compromiso" ? (comp?.responsable || responsable) : (h.responsable_nombre || responsable),
-            estatus: "Pendiente",
+            compromiso: conCompromiso ? (comp?.compromiso || "—") : "",
+            subsanacion: "",
+            fechaCompromiso: conCompromiso ? (comp?.fechaCompromiso || fechaDefault) : fechaDefault,
+            responsable: conCompromiso ? (comp?.responsable || responsable) : (h.responsable_nombre || ""),
+            estatus: conCompromiso ? "Finalizado" : "Pendiente",
           };
         }),
         orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
@@ -489,7 +493,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       await supabase.from("auditoria_actas").insert({
         auditoria_id: aud.id as string,
         departamento: deptoSelec,
-        responsable_nombre: responsable,
+        responsable_nombre: responsableActa,
         fecha_acta: data.fecha,
         contenido_json: JSON.parse(JSON.stringify(data)),
         pdf_url: res.path,
@@ -502,7 +506,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       qc.invalidateQueries({ queryKey: ["acta", aud.id] });
       qc.invalidateQueries({ queryKey: ["auditoria", aud.id] });
       toast.success(`Acta generada para: ${deptoSelec}`);
-      setPaso(1); setDeptoSelec(""); setModo("sin_compromiso");
+      setPaso(1); setDeptoSelec(""); setModo("sin_compromiso"); setResponsable(""); setSubsanacion("");
       setOpen(false);
     } catch (e) {
       toast.error((e as Error).message);
