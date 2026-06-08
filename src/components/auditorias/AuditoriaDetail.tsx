@@ -380,7 +380,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
 
 function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   aud: Record<string, unknown>;
-  hallazgos: Array<{ tipo: string; descripcion: string; responsable_nombre: string | null; estatus: string }>;
+  hallazgos: Array<{ id?: string; tipo: string; descripcion: string; responsable_nombre: string | null; estatus: string }>;
   acta: Record<string, unknown> | null | undefined;
   empresaNombres: string;
   areas: { id: string; nombre: string }[];
