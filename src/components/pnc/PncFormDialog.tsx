@@ -108,7 +108,7 @@ export function PncFormDialog({
         proceso_documento_id: procesoDocId || null,
         proceso_texto: procesoDocId ? null : (procesoTexto || null),
         razon,
-        metodologia,
+        metodologia: "na",
         fecha_origen: fechaOrigen,
         fecha_compromiso: fechaCompromiso || null,
         observaciones: observaciones || null,
