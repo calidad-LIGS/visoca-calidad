@@ -8,7 +8,7 @@ import { useEmpresas, useAreas, useUsuarios } from "@/hooks/useCatalogos";
 import { nextPncNumero, addBusinessDays, toISODate } from "@/lib/pncUtils";
 import { upsertEvento } from "@/lib/calendarSync";
 import {
-  PNC_ORIGEN_LABEL, PNC_RAZON_LABEL, PNC_METODOLOGIA_LABEL,
+  PNC_ORIGEN_LABEL, PNC_RAZON_LABEL,
 } from "@/lib/badges";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -45,7 +45,7 @@ export function PncFormDialog({
   const [procesoDocId, setProcesoDocId] = useState<string>("");
   const [procesoTexto, setProcesoTexto] = useState("");
   const [razon, setRazon] = useState("nc_menor");
-  const [metodologia, setMetodologia] = useState("na");
+  
   const [fechaOrigen, setFechaOrigen] = useState(toISODate(new Date()));
   const [fechaCompromiso, setFechaCompromiso] = useState("");
   const [observaciones, setObservaciones] = useState("");
@@ -74,7 +74,7 @@ export function PncFormDialog({
       setEmpresa(""); setDescripcion(""); setOrigen("manual"); setAreaIds([]);
       setResponsables([]); setNuevoResp("");
       setProcesoBusqueda(""); setProcesoDocId(""); setProcesoTexto("");
-      setRazon("nc_menor"); setMetodologia("na");
+      setRazon("nc_menor");
       setFechaOrigen(toISODate(new Date())); setFechaCompromiso(""); setObservaciones("");
     }
   }, [open]);
@@ -108,7 +108,7 @@ export function PncFormDialog({
         proceso_documento_id: procesoDocId || null,
         proceso_texto: procesoDocId ? null : (procesoTexto || null),
         razon,
-        metodologia,
+        metodologia: "na",
         fecha_origen: fechaOrigen,
         fecha_compromiso: fechaCompromiso || null,
         observaciones: observaciones || null,
@@ -245,9 +245,6 @@ export function PncFormDialog({
             {!procesoDocId && (
               <Input className="mt-2" value={procesoTexto} onChange={(e) => setProcesoTexto(e.target.value)} placeholder="...o escribe el proceso libremente" />
             )}
-          </F>
-          <F label="Metodología">
-            <Sel value={metodologia} onChange={setMetodologia} options={Object.entries(PNC_METODOLOGIA_LABEL).map(([value, label]) => ({ value, label }))} />
           </F>
           <div className="flex items-end text-xs text-muted-foreground">{metodHint}</div>
           <F label="Fecha origen">

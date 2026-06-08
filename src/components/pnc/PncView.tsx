@@ -99,12 +99,12 @@ export function PncView() {
   };
 
   const kpis = useMemo(() => {
-    const abiertos = kpiRows.filter((p) => p.estatus !== "finalizado").length;
-    const vencidos = kpiRows.filter((p) => p.estatus !== "finalizado" && p.fecha_compromiso && new Date(p.fecha_compromiso) < new Date()).length;
-    const verificacion = kpiRows.filter((p) => p.estatus === "verificacion").length;
+    const abiertos = kpiRows.filter((p) => p.estatus === "pendiente").length;
+    const vencidos = kpiRows.filter((p) => p.estatus === "pendiente" && p.fecha_compromiso && new Date(p.fecha_compromiso) < new Date()).length;
+    const cerrados = kpiRows.filter((p) => p.estatus === "cerrado").length;
     const now = new Date();
     const cerradosMes = kpiRows.filter((p) => p.fecha_cierre && new Date(p.fecha_cierre).getMonth() === now.getMonth() && new Date(p.fecha_cierre).getFullYear() === now.getFullYear()).length;
-    return { abiertos, vencidos, verificacion, cerradosMes };
+    return { abiertos, vencidos, cerrados, cerradosMes };
   }, [kpiRows]);
 
   // Exporta TODOS los registros filtrados (sin paginar)
@@ -147,7 +147,7 @@ export function PncView() {
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard label="Total abiertos" value={kpis.abiertos} accent="primary" />
         <KpiCard label="Vencidos" value={kpis.vencidos} accent="danger" sub="Requieren atención" />
-        <KpiCard label="En verificación" value={kpis.verificacion} accent="warning" />
+        <KpiCard label="Cerrados (total)" value={kpis.cerrados} accent="accent" />
         <KpiCard label="Cerrados este mes" value={kpis.cerradosMes} accent="accent" />
       </div>
 
@@ -178,9 +178,9 @@ export function PncView() {
           action={perms.crearPnc && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nuevo PNC</Button>} />
       ) : (
         <>
-          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isLoading={isLoading} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
+          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días / Cierre"]} isLoading={isLoading} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
             {pncs.map((p) => {
-              const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "finalizado");
+              const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "cerrado");
               const dotColor = { accent: "#1BC8A0", warning: "#F5A623", danger: "#E54B4B" }[info.color];
               return (
                 <Tr key={p.id} active={detailId === p.id} onClick={() => setDetailId(p.id)}>
@@ -192,7 +192,13 @@ export function PncView() {
                   <Td className="text-xs">{p.razon ? PNC_RAZON_LABEL[p.razon] : "—"}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
-                  <Td><span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span></Td>
+                  <Td>
+                    {p.estatus === "pendiente" ? (
+                      <span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span>
+                    ) : (
+                      <span className="whitespace-nowrap text-xs text-accent">{p.fecha_cierre ?? "—"}</span>
+                    )}
+                  </Td>
                 </Tr>
               );
             })}

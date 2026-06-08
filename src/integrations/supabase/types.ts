@@ -421,6 +421,39 @@ export type Database = {
           },
         ]
       }
+      cargo_areas: {
+        Row: {
+          area_id: string | null
+          cargo_id: string | null
+          id: string
+        }
+        Insert: {
+          area_id?: string | null
+          cargo_id?: string | null
+          id?: string
+        }
+        Update: {
+          area_id?: string | null
+          cargo_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cargo_areas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cargo_areas_cargo_id_fkey"
+            columns: ["cargo_id"]
+            isOneToOne: false
+            referencedRelation: "cargos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cargos: {
         Row: {
           activo: boolean
