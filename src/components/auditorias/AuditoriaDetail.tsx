@@ -833,7 +833,7 @@ function CierreSection({ aud }: { aud: Record<string, unknown> }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <span className="font-display font-semibold text-foreground">Cierre de auditoría</span>
-      <p className="mb-3 mt-1 text-sm text-muted-foreground">No se puede cerrar si hay hallazgos con PNC sin finalizar.</p>
+      <p className="mb-3 mt-1 text-sm text-muted-foreground">No se puede cerrar si hay hallazgos sin cerrar.</p>
       <Button size="sm" variant="outline" onClick={() => { setPendientes([]); setOpen(true); }}><Lock className="mr-1.5 h-4 w-4" /> Cerrar auditoría</Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
