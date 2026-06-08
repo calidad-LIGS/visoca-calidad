@@ -130,7 +130,7 @@ export function ActaDocument({ d }: { d: ActaData }) {
         </View>
 
         <Text style={s.intro}>
-          Derivado de la auditoría {d.codigoAuditoria} — {d.descripcionAuditoria}, se obtuvieron las siguientes observaciones para el departamento de {d.departamento}:
+          Derivado de la auditoría {d.codigoAuditoria} {d.descripcionAuditoria}, se obtuvieron las siguientes observaciones para el departamento de {d.departamento}:
         </Text>
 
         <View style={s.table}>
