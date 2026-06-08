@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsuarios } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
@@ -26,7 +26,6 @@ interface Auditoria {
 
 export function AuditoriasView() {
   const perms = usePermisos();
-  const navigate = useNavigate();
   const { data: usuarios = [] } = useUsuarios();
   const [tab, setTab] = useState("todas");
   const [formOpen, setFormOpen] = useState(false);
@@ -151,26 +150,50 @@ export function AuditoriasView() {
             {auditorias.map((a) => {
               const h = hallazgosCount[a.id];
               return (
-                <Tr key={a.id} onClick={() => navigate({ to: "/auditorias/$id", params: { id: a.id } })}>
-                  <Td><span className="font-mono text-primary">{a.codigo_auditoria}</span></Td>
-                  <Td>
-                    <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: a.tipo === "interna" ? "#3B7DD8" : "#8B5CF6", color: "#fff" }}>
-                      {a.tipo === "interna" ? "Interna" : "Externa"}
-                    </span>
+                <Tr key={a.id} className="cursor-pointer transition-colors hover:!bg-elevated">
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block px-4 py-3 font-mono text-primary hover:underline">
+                      {a.codigo_auditoria}
+                    </Link>
                   </Td>
-                  <Td className="text-xs uppercase">{a.certificacion ?? "—"}</Td>
-                  <Td className="whitespace-nowrap text-xs">{a.fecha_inicio ?? "—"} → {a.fecha_fin ?? "—"}</Td>
-                  <Td className="text-sm">{auditorName(a.auditor_lider_id)}</Td>
-                  <Td>
-                    {h ? (
-                      <div className="flex gap-1">
-                        {h.mayor > 0 && <OutlineBadge>{h.mayor} Mayor</OutlineBadge>}
-                        {h.menor > 0 && <OutlineBadge>{h.menor} Menor</OutlineBadge>}
-                        {h.om > 0 && <OutlineBadge>{h.om} OM</OutlineBadge>}
-                      </div>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block px-4 py-3">
+                      <span className="rounded-md px-2 py-0.5 text-xs font-semibold" style={{ backgroundColor: a.tipo === "interna" ? "#3B7DD8" : "#8B5CF6", color: "#fff" }}>
+                        {a.tipo === "interna" ? "Interna" : "Externa"}
+                      </span>
+                    </Link>
                   </Td>
-                  <Td><StatusBadge cfg={AUD_ESTATUS[a.estatus]} /></Td>
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block px-4 py-3 text-xs uppercase">
+                      {a.certificacion ?? "—"}
+                    </Link>
+                  </Td>
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block whitespace-nowrap px-4 py-3 text-xs">
+                      {a.fecha_inicio ?? "—"} → {a.fecha_fin ?? "—"}
+                    </Link>
+                  </Td>
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block px-4 py-3 text-sm">
+                      {auditorName(a.auditor_lider_id)}
+                    </Link>
+                  </Td>
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block px-4 py-3">
+                      {h ? (
+                        <div className="flex gap-1">
+                          {h.mayor > 0 && <OutlineBadge>{h.mayor} Mayor</OutlineBadge>}
+                          {h.menor > 0 && <OutlineBadge>{h.menor} Menor</OutlineBadge>}
+                          {h.om > 0 && <OutlineBadge>{h.om} OM</OutlineBadge>}
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground">—</span>}
+                    </Link>
+                  </Td>
+                  <Td className="p-0">
+                    <Link to="/auditorias/$id" params={{ id: a.id }} className="block px-4 py-3">
+                      <StatusBadge cfg={AUD_ESTATUS[a.estatus]} />
+                    </Link>
+                  </Td>
                 </Tr>
               );
             })}
