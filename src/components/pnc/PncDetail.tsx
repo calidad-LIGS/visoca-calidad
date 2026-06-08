@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Clock, Plus, Pencil, Upload, FileText, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { usePermisos } from "@/lib/permisos";
+
 import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
 import { SignedFileLink } from "@/components/common/SignedFileLink";
