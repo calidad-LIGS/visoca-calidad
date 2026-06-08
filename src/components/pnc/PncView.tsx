@@ -99,12 +99,12 @@ export function PncView() {
   };
 
   const kpis = useMemo(() => {
-    const abiertos = kpiRows.filter((p) => p.estatus !== "finalizado").length;
-    const vencidos = kpiRows.filter((p) => p.estatus !== "finalizado" && p.fecha_compromiso && new Date(p.fecha_compromiso) < new Date()).length;
-    const verificacion = kpiRows.filter((p) => p.estatus === "verificacion").length;
+    const abiertos = kpiRows.filter((p) => p.estatus === "pendiente").length;
+    const vencidos = kpiRows.filter((p) => p.estatus === "pendiente" && p.fecha_compromiso && new Date(p.fecha_compromiso) < new Date()).length;
+    const cerrados = kpiRows.filter((p) => p.estatus === "cerrado").length;
     const now = new Date();
     const cerradosMes = kpiRows.filter((p) => p.fecha_cierre && new Date(p.fecha_cierre).getMonth() === now.getMonth() && new Date(p.fecha_cierre).getFullYear() === now.getFullYear()).length;
-    return { abiertos, vencidos, verificacion, cerradosMes };
+    return { abiertos, vencidos, cerrados, cerradosMes };
   }, [kpiRows]);
 
   // Exporta TODOS los registros filtrados (sin paginar)
