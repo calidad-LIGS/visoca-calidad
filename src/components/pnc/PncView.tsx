@@ -178,7 +178,7 @@ export function PncView() {
           action={perms.crearPnc && <Button onClick={() => setFormOpen(true)}><Plus className="mr-1.5 h-4 w-4" /> Nuevo PNC</Button>} />
       ) : (
         <>
-          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isLoading={isLoading} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
+          <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días / Cierre"]} isLoading={isLoading} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
             {pncs.map((p) => {
               const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "cerrado");
               const dotColor = { accent: "#1BC8A0", warning: "#F5A623", danger: "#E54B4B" }[info.color];
