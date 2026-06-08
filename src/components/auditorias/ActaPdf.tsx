@@ -67,6 +67,7 @@ export interface ActaData {
   departamento: string;
   responsable: string;
   fecha: string;
+  subsanacion?: string;
   hallazgos: HallazgoActa[];
   orgNombre: string;
   orgLogoUrl: string | null;
