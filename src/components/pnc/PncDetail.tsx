@@ -66,7 +66,7 @@ function Body({ pncId }: { pncId: string }) {
   });
 
   if (!pnc) return null;
-  const info = diasInfo(pnc.fecha_origen, pnc.fecha_compromiso, pnc.estatus === "finalizado");
+  const info = diasInfo(pnc.fecha_origen, pnc.fecha_compromiso, pnc.estatus === "cerrado");
   const colorClass = { accent: "text-accent", warning: "text-warning", danger: "text-danger" }[info.color];
 
   return (
