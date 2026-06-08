@@ -11,6 +11,7 @@ interface HallazgoInput {
   auditoria_id: string;
   tipo: "nc_mayor" | "nc_menor" | "oportunidad_mejora";
   descripcion: string;
+  departamento: string | null;
   proceso_documento_id: string | null;
   proceso_texto: string | null;
   area_id: string | null;
