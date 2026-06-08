@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -380,7 +380,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
 
 function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   aud: Record<string, unknown>;
-  hallazgos: Array<{ tipo: string; descripcion: string; responsable_nombre: string | null; estatus: string }>;
+  hallazgos: Array<{ id?: string; tipo: string; descripcion: string; responsable_nombre: string | null; estatus: string }>;
   acta: Record<string, unknown> | null | undefined;
   empresaNombres: string;
   areas: { id: string; nombre: string }[];
@@ -391,10 +391,15 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const { perfil } = useAuth();
   const perms = usePermisos();
   const [open, setOpen] = useState(false);
-  const [departamento, setDepartamento] = useState("Calidad");
   const [responsable, setResponsable] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [paso, setPaso] = useState<1 | 2>(1);
+  const [deptoSelec, setDeptoSelec] = useState("");
+  const [modo, setModo] = useState<"sin_compromiso" | "con_compromiso">("sin_compromiso");
+  const [compromisos, setCompromisos] = useState<Record<string, {
+    compromiso: string; subsanacion: string; responsable: string; fechaCompromiso: string;
+  }>>({});
 
   const { data: orgConfig } = useQuery({
     queryKey: ["org_config"],
@@ -405,69 +410,97 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
     staleTime: 300_000, // 5 minutos — cambia poco
   });
 
+  // Deptos disponibles (con hallazgos)
+  const deptosConHallazgos = [...new Set(
+    hallazgos.map((h) => (h as { departamento?: string }).departamento?.trim() || "General")
+  )];
+
+  // Hallazgos del depto seleccionado
+  const hallazgosDepto = hallazgos.filter(
+    (h) => ((h as { departamento?: string }).departamento?.trim() || "General") === deptoSelec
+  );
+
+  // Inicializar compromisos al seleccionar depto
+  useEffect(() => {
+    if (!deptoSelec) return;
+    const init: Record<string, { compromiso: string; subsanacion: string; responsable: string; fechaCompromiso: string }> = {};
+    hallazgos
+      .filter((h) => ((h as { departamento?: string }).departamento?.trim() || "General") === deptoSelec)
+      .forEach((h) => {
+        init[h.id ?? h.descripcion] = {
+          compromiso: "",
+          subsanacion: "",
+          responsable: h.responsable_nombre || "",
+          fechaCompromiso: h.tipo === "nc_mayor"
+            ? toISODate(addBusinessDays(new Date(), 7))
+            : "",
+        };
+      });
+    setCompromisos(init);
+  }, [deptoSelec]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Función generar (solo el depto seleccionado)
   const generar = async () => {
     setGenerating(true);
     try {
-      // Agrupar hallazgos por departamento
-      const porDepto = hallazgos.reduce<Record<string, typeof hallazgos>>((acc, h) => {
-        const depto = (h as { departamento?: string }).departamento?.trim() || "General";
-        if (!acc[depto]) acc[depto] = [];
-        acc[depto].push(h);
-        return acc;
-      }, {});
-      const deptos = Object.keys(porDepto);
-      for (const depto of deptos) {
-        const hDepto = porDepto[depto];
-        const data: ActaData = {
-          codigo: "LIGS-CAL-04-F03",
-          version: "01",
-          entradaVigor: "Abril 2023",
-          ultimaRevision: "Diciembre 2025",
-          aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
-          codigoAuditoria: aud.codigo_auditoria as string,
-          descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
-          departamento: depto,
-          responsable: responsable,
-          fecha: new Date().toISOString().slice(0, 10),
-          hallazgos: hDepto.map((h) => ({
+      const data: ActaData = {
+        codigo: "LIGS-CAL-04-F03",
+        version: "01",
+        entradaVigor: "Abril 2023",
+        ultimaRevision: "Diciembre 2025",
+        aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
+        codigoAuditoria: aud.codigo_auditoria as string,
+        descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
+        departamento: deptoSelec,
+        responsable: responsable,
+        fecha: new Date().toISOString().slice(0, 10),
+        hallazgos: hallazgosDepto.map((h) => {
+          const hid = h.id ?? h.descripcion;
+          const comp = compromisos[hid];
+          return {
             tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
             descripcion: h.descripcion,
-            compromiso: "Acción correctiva según plan de mejora",
-            fechaCompromiso: h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría",
-            responsable: h.responsable_nombre || responsable,
-            estatus: h.estatus,
-          })),
-          orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
-          orgLogoUrl: orgConfig?.logo_url ?? null,
-          jefeCalidadNombre: "Ing. Sousthy M. De la Cruz Gavilla",
-          jefeCalidadPuesto: "Jefe de Calidad",
-        };
-        const blob = await generarActaBlob(data);
-        // Descargar en el navegador
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `acta-${aud.codigo_auditoria}-${depto.replace(/\s+/g, "_")}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-        // Guardar en BD y Storage
-        const file = new File([blob], a.download, { type: "application/pdf" });
-        const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/${depto.replace(/\s+/g, "_")}-${Date.now()}.pdf`;
-        const res = await uploadFile("auditorias", path, file);
-        await supabase.from("auditoria_actas").insert({
-          auditoria_id: aud.id as string,
-          departamento: depto,
-          responsable_nombre: responsable,
-          fecha_acta: data.fecha,
-          contenido_json: JSON.parse(JSON.stringify(data)),
-          pdf_url: res.path,
-          generado_por: perfil?.id ?? null,
-        });
-      }
-      await supabase.from("auditorias").update({ estatus: "en_seguimiento" }).eq("id", aud.id as string);
+            compromiso: modo === "con_compromiso" ? (comp?.compromiso || "—") : "Pendiente de definir",
+            subsanacion: modo === "con_compromiso" ? (comp?.subsanacion || "") : "",
+            fechaCompromiso: modo === "con_compromiso"
+              ? (comp?.fechaCompromiso || (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"))
+              : (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"),
+            responsable: modo === "con_compromiso" ? (comp?.responsable || responsable) : (h.responsable_nombre || responsable),
+            estatus: "Pendiente",
+          };
+        }),
+        orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
+        orgLogoUrl: orgConfig?.logo_url ?? null,
+        jefeCalidadNombre: "Ing. Sousthy M. De la Cruz Gavilla",
+        jefeCalidadPuesto: "Jefe de Calidad",
+      };
+      const blob = await generarActaBlob(data);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `acta-${aud.codigo_auditoria as string}-${deptoSelec.replace(/\s+/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      const file = new File([blob], a.download, { type: "application/pdf" });
+      const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/${deptoSelec.replace(/\s+/g, "_")}-${Date.now()}.pdf`;
+      const res = await uploadFile("auditorias", path, file);
+      await supabase.from("auditoria_actas").insert({
+        auditoria_id: aud.id as string,
+        departamento: deptoSelec,
+        responsable_nombre: responsable,
+        fecha_acta: data.fecha,
+        contenido_json: JSON.parse(JSON.stringify(data)),
+        pdf_url: res.path,
+        generado_por: perfil?.id ?? null,
+        tipo_generacion: modo,
+      });
+      await supabase.from("auditorias")
+        .update({ estatus: "en_seguimiento" })
+        .eq("id", aud.id as string);
       qc.invalidateQueries({ queryKey: ["acta", aud.id] });
       qc.invalidateQueries({ queryKey: ["auditoria", aud.id] });
-      toast.success(deptos.length > 1 ? `${deptos.length} actas generadas` : "Acta generada");
+      toast.success(`Acta generada para: ${deptoSelec}`);
+      setPaso(1); setDeptoSelec(""); setModo("sin_compromiso");
       setOpen(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -475,10 +508,6 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       setGenerating(false);
     }
   };
-
-  const deptosUnicos = [...new Set(
-    hallazgos.map((h) => (h as { departamento?: string }).departamento?.trim() || "General")
-  )];
 
   return (
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
@@ -489,9 +518,9 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
             <Tooltip>
               <TooltipTrigger asChild>
                 <span tabIndex={0}>
-                  <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => setOpen(true)}>
-                    {acta ? "Regenerar actas" : deptosUnicos.length > 1
-                      ? `Generar Actas por Departamento (${deptosUnicos.length})`
+                  <Button size="sm" variant="outline" disabled={hallazgos.length === 0} onClick={() => { setPaso(1); setOpen(true); }}>
+                    {acta ? "Regenerar acta" : deptosConHallazgos.length > 1
+                      ? `Generar Acta por Departamento (${deptosConHallazgos.length})`
                       : "Generar Acta de Resultados"}
                   </Button>
                 </span>
@@ -509,16 +538,123 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Generar Acta de Resultados</DialogTitle></DialogHeader>
-          <div className="space-y-3 py-2">
-            <div className="space-y-1.5"><Label>Departamento auditado</Label><Input value={departamento} onChange={(e) => setDepartamento(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>Responsable del área</Label><Input value={responsable} onChange={(e) => setResponsable(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>Descripción de la auditoría</Label><Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} /></div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={generar} disabled={generating}>{generating ? "Generando…" : "Generar PDF"}</Button>
-          </DialogFooter>
+          <DialogHeader>
+            <DialogTitle>{paso === 1 ? "Generar Acta de Resultados" : "Compromisos y subsanación"}</DialogTitle>
+          </DialogHeader>
+
+          {paso === 1 && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label>Selecciona el departamento</Label>
+                <Select value={deptoSelec} onValueChange={setDeptoSelec}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un departamento con hallazgos..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deptosConHallazgos.map((d) => (
+                      <SelectItem key={d} value={d}>{d} ({hallazgos.filter(h => ((h as {departamento?:string}).departamento?.trim()||"General") === d).length} hallazgos)</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Responsable del área</Label>
+                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Descripción de la auditoría (para el acta)</Label>
+                <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Modo de generación</Label>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer rounded-md border border-border p-3 hover:bg-elevated">
+                    <input type="radio" name="modo" value="sin_compromiso"
+                      checked={modo === "sin_compromiso"}
+                      onChange={() => setModo("sin_compromiso")} />
+                    <div>
+                      <p className="text-sm font-medium">Sin compromisos</p>
+                      <p className="text-xs text-muted-foreground">Genera el acta con hallazgos en estado "Pendiente" sin compromisos definidos</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer rounded-md border border-border p-3 hover:bg-elevated">
+                    <input type="radio" name="modo" value="con_compromiso"
+                      checked={modo === "con_compromiso"}
+                      onChange={() => setModo("con_compromiso")} />
+                    <div>
+                      <p className="text-sm font-medium">Con compromisos y subsanación</p>
+                      <p className="text-xs text-muted-foreground">Permite redactar el compromiso y subsanación por cada hallazgo</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button
+                  disabled={!deptoSelec || generating}
+                  onClick={() => modo === "con_compromiso" ? setPaso(2) : generar()}
+                >
+                  {modo === "con_compromiso" ? "Siguiente →" : (generating ? "Generando…" : "Generar acta")}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+
+          {paso === 2 && (
+            <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
+              <p className="text-sm font-medium">Departamento: <span className="text-primary">{deptoSelec}</span> — {hallazgosDepto.length} hallazgos</p>
+              {hallazgosDepto.map((h, i) => {
+                const hid = h.id ?? h.descripcion;
+                return (
+                  <div key={hid} className="rounded-md border border-border p-3 space-y-2">
+                    <p className="text-xs font-semibold uppercase text-muted-foreground">Hallazgo {i + 1} — {h.tipo}</p>
+                    <p className="text-sm text-foreground">{h.descripcion}</p>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Compromiso / Acción correctiva</Label>
+                      <Textarea
+                        value={compromisos[hid]?.compromiso || ""}
+                        onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], compromiso: e.target.value }}))}
+                        placeholder="Describe el compromiso adquirido..."
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Subsanación del responsable</Label>
+                      <Textarea
+                        value={compromisos[hid]?.subsanacion || ""}
+                        onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], subsanacion: e.target.value }}))}
+                        placeholder="¿Cómo se subsanó o se subsanará?"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Responsable</Label>
+                        <Input
+                          value={compromisos[hid]?.responsable || ""}
+                          onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], responsable: e.target.value }}))}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Fecha compromiso</Label>
+                        <Input
+                          type="date"
+                          value={compromisos[hid]?.fechaCompromiso || ""}
+                          onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], fechaCompromiso: e.target.value }}))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setPaso(1)}>← Volver</Button>
+                <Button onClick={generar} disabled={generating}>
+                  {generating ? "Generando…" : "Generar acta"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

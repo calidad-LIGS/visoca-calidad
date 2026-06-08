@@ -50,6 +50,7 @@ export interface HallazgoActa {
   tipo: "nc_mayor" | "nc_menor" | "oportunidad_mejora";
   descripcion: string;
   compromiso: string;
+  subsanacion?: string;
   fechaCompromiso: string;
   responsable: string;
   estatus: string;
