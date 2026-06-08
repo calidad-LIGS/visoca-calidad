@@ -170,6 +170,7 @@ function HallazgosSection({ aud, hallazgos }: { aud: Record<string, unknown>; ha
   const [adding, setAdding] = useState(false);
   const [tipo, setTipo] = useState<"nc_mayor" | "nc_menor" | "oportunidad_mejora">("nc_menor");
   const [descripcion, setDescripcion] = useState("");
+  const [depto, setDepto] = useState("");
   const [area, setArea] = useState("");
   const [resp, setResp] = useState("");
   // Proceso afectado
