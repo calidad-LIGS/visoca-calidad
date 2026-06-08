@@ -34,9 +34,17 @@ export const buscarDocumentosIA = createServerFn({ method: "POST" })
       return { resumen: "No hay documentos vigentes registrados en el sistema.", documentos: [] };
     }
 
-    // Construir catálogo como texto compacto
+    // Construir catálogo como texto compacto.
+    // Los comentarios son texto libre escrito por usuarios, por lo que se
+    // neutralizan los separadores y saltos de línea para evitar inyección de
+    // instrucciones (prompt injection) en el modelo.
+    const sanitize = (v: string | null | undefined) =>
+      (v ?? "").replace(/[\r\n|]+/g, " ").trim().slice(0, 200);
     const catalogo = docs
-      .map((d) => `${d.id}|${d.codigo}|${d.nombre}|${d.tipo}${d.comentarios ? `|${d.comentarios}` : ""}`)
+      .map((d) => {
+        const base = `${d.id}|${sanitize(d.codigo)}|${sanitize(d.nombre)}|${sanitize(d.tipo)}`;
+        return d.comentarios ? `${base}|${sanitize(d.comentarios)}` : base;
+      })
       .join("\n");
 
     // Llamar a Anthropic API
