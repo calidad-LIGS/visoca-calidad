@@ -172,6 +172,11 @@ export function ActaDocument({ d }: { d: ActaData }) {
           <Text style={s.subsanText}>
             Mediante la presente queda declarada la subsanación de las No conformidades marcadas durante la auditoría interna realizada al departamento de {d.departamento}.
           </Text>
+          {d.subsanacion && (
+            <Text style={{ marginTop: 4, fontSize: 8 }}>
+              Acciones tomadas: {d.subsanacion}
+            </Text>
+          )}
         </View>
 
         <View style={s.signRow}>
