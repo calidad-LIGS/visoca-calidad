@@ -10,6 +10,38 @@ export interface UploadResult {
 
 const isAbsoluteUrl = (value: string) => /^https?:\/\//i.test(value);
 
+/**
+ * Dominios externos permitidos para enlaces de documentos (p. ej. Google Drive)
+ * y el almacenamiento de Supabase. Cualquier otra URL absoluta se considera
+ * insegura para evitar redirecciones abiertas (open redirect) almacenadas.
+ */
+function isAllowedExternalUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:") return false;
+  const host = url.hostname.toLowerCase();
+  return (
+    host === "drive.google.com" ||
+    host === "docs.google.com" ||
+    host === "sheets.google.com" ||
+    host === "storage.googleapis.com" ||
+    host.endsWith(".supabase.co")
+  );
+}
+
+/**
+ * Devuelve la URL externa solo si pertenece a un dominio de confianza.
+ * Útil para renderizar enlaces controlados por el usuario (drive_url) de forma segura.
+ */
+export function safeExternalUrl(value?: string | null): string | null {
+  if (!value) return null;
+  return isAllowedExternalUrl(value) ? value : null;
+}
+
 /** Sube un archivo a un bucket privado y devuelve la ruta del objeto. */
 export async function uploadFile(
   bucket: string,
