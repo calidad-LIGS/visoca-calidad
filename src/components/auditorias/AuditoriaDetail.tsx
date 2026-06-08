@@ -391,10 +391,15 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const { perfil } = useAuth();
   const perms = usePermisos();
   const [open, setOpen] = useState(false);
-  const [departamento, setDepartamento] = useState("Calidad");
   const [responsable, setResponsable] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [paso, setPaso] = useState<1 | 2>(1);
+  const [deptoSelec, setDeptoSelec] = useState("");
+  const [modo, setModo] = useState<"sin_compromiso" | "con_compromiso">("sin_compromiso");
+  const [compromisos, setCompromisos] = useState<Record<string, {
+    compromiso: string; subsanacion: string; responsable: string; fechaCompromiso: string;
+  }>>({});
 
   const { data: orgConfig } = useQuery({
     queryKey: ["org_config"],
@@ -405,69 +410,97 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
     staleTime: 300_000, // 5 minutos — cambia poco
   });
 
+  // Deptos disponibles (con hallazgos)
+  const deptosConHallazgos = [...new Set(
+    hallazgos.map((h) => (h as { departamento?: string }).departamento?.trim() || "General")
+  )];
+
+  // Hallazgos del depto seleccionado
+  const hallazgosDepto = hallazgos.filter(
+    (h) => ((h as { departamento?: string }).departamento?.trim() || "General") === deptoSelec
+  );
+
+  // Inicializar compromisos al seleccionar depto
+  useEffect(() => {
+    if (!deptoSelec) return;
+    const init: Record<string, { compromiso: string; subsanacion: string; responsable: string; fechaCompromiso: string }> = {};
+    hallazgos
+      .filter((h) => ((h as { departamento?: string }).departamento?.trim() || "General") === deptoSelec)
+      .forEach((h) => {
+        init[h.id ?? h.descripcion] = {
+          compromiso: "",
+          subsanacion: "",
+          responsable: h.responsable_nombre || "",
+          fechaCompromiso: h.tipo === "nc_mayor"
+            ? toISODate(addBusinessDays(new Date(), 7))
+            : "",
+        };
+      });
+    setCompromisos(init);
+  }, [deptoSelec]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Función generar (solo el depto seleccionado)
   const generar = async () => {
     setGenerating(true);
     try {
-      // Agrupar hallazgos por departamento
-      const porDepto = hallazgos.reduce<Record<string, typeof hallazgos>>((acc, h) => {
-        const depto = (h as { departamento?: string }).departamento?.trim() || "General";
-        if (!acc[depto]) acc[depto] = [];
-        acc[depto].push(h);
-        return acc;
-      }, {});
-      const deptos = Object.keys(porDepto);
-      for (const depto of deptos) {
-        const hDepto = porDepto[depto];
-        const data: ActaData = {
-          codigo: "LIGS-CAL-04-F03",
-          version: "01",
-          entradaVigor: "Abril 2023",
-          ultimaRevision: "Diciembre 2025",
-          aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
-          codigoAuditoria: aud.codigo_auditoria as string,
-          descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
-          departamento: depto,
-          responsable: responsable,
-          fecha: new Date().toISOString().slice(0, 10),
-          hallazgos: hDepto.map((h) => ({
+      const data: ActaData = {
+        codigo: "LIGS-CAL-04-F03",
+        version: "01",
+        entradaVigor: "Abril 2023",
+        ultimaRevision: "Diciembre 2025",
+        aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
+        codigoAuditoria: aud.codigo_auditoria as string,
+        descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
+        departamento: deptoSelec,
+        responsable: responsable,
+        fecha: new Date().toISOString().slice(0, 10),
+        hallazgos: hallazgosDepto.map((h) => {
+          const hid = h.id ?? h.descripcion;
+          const comp = compromisos[hid];
+          return {
             tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
             descripcion: h.descripcion,
-            compromiso: "Acción correctiva según plan de mejora",
-            fechaCompromiso: h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría",
-            responsable: h.responsable_nombre || responsable,
-            estatus: h.estatus,
-          })),
-          orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
-          orgLogoUrl: orgConfig?.logo_url ?? null,
-          jefeCalidadNombre: "Ing. Sousthy M. De la Cruz Gavilla",
-          jefeCalidadPuesto: "Jefe de Calidad",
-        };
-        const blob = await generarActaBlob(data);
-        // Descargar en el navegador
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `acta-${aud.codigo_auditoria}-${depto.replace(/\s+/g, "_")}.pdf`;
-        a.click();
-        URL.revokeObjectURL(url);
-        // Guardar en BD y Storage
-        const file = new File([blob], a.download, { type: "application/pdf" });
-        const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/${depto.replace(/\s+/g, "_")}-${Date.now()}.pdf`;
-        const res = await uploadFile("auditorias", path, file);
-        await supabase.from("auditoria_actas").insert({
-          auditoria_id: aud.id as string,
-          departamento: depto,
-          responsable_nombre: responsable,
-          fecha_acta: data.fecha,
-          contenido_json: JSON.parse(JSON.stringify(data)),
-          pdf_url: res.path,
-          generado_por: perfil?.id ?? null,
-        });
-      }
-      await supabase.from("auditorias").update({ estatus: "en_seguimiento" }).eq("id", aud.id as string);
+            compromiso: modo === "con_compromiso" ? (comp?.compromiso || "—") : "Pendiente de definir",
+            subsanacion: modo === "con_compromiso" ? (comp?.subsanacion || "") : "",
+            fechaCompromiso: modo === "con_compromiso"
+              ? (comp?.fechaCompromiso || (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"))
+              : (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"),
+            responsable: modo === "con_compromiso" ? (comp?.responsable || responsable) : (h.responsable_nombre || responsable),
+            estatus: "Pendiente",
+          };
+        }),
+        orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
+        orgLogoUrl: orgConfig?.logo_url ?? null,
+        jefeCalidadNombre: "Ing. Sousthy M. De la Cruz Gavilla",
+        jefeCalidadPuesto: "Jefe de Calidad",
+      };
+      const blob = await generarActaBlob(data);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `acta-${aud.codigo_auditoria as string}-${deptoSelec.replace(/\s+/g, "_")}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      const file = new File([blob], a.download, { type: "application/pdf" });
+      const path = `${sanitizeSegment(aud.codigo_auditoria as string)}/${deptoSelec.replace(/\s+/g, "_")}-${Date.now()}.pdf`;
+      const res = await uploadFile("auditorias", path, file);
+      await supabase.from("auditoria_actas").insert({
+        auditoria_id: aud.id as string,
+        departamento: deptoSelec,
+        responsable_nombre: responsable,
+        fecha_acta: data.fecha,
+        contenido_json: JSON.parse(JSON.stringify(data)),
+        pdf_url: res.path,
+        generado_por: perfil?.id ?? null,
+        tipo_generacion: modo,
+      });
+      await supabase.from("auditorias")
+        .update({ estatus: "en_seguimiento" })
+        .eq("id", aud.id as string);
       qc.invalidateQueries({ queryKey: ["acta", aud.id] });
       qc.invalidateQueries({ queryKey: ["auditoria", aud.id] });
-      toast.success(deptos.length > 1 ? `${deptos.length} actas generadas` : "Acta generada");
+      toast.success(`Acta generada para: ${deptoSelec}`);
+      setPaso(1); setDeptoSelec(""); setModo("sin_compromiso");
       setOpen(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -475,10 +508,6 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       setGenerating(false);
     }
   };
-
-  const deptosUnicos = [...new Set(
-    hallazgos.map((h) => (h as { departamento?: string }).departamento?.trim() || "General")
-  )];
 
   return (
     <div className="mb-6 rounded-lg border border-border bg-card p-4">
