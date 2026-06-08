@@ -804,12 +804,15 @@ function CierreSection({ aud }: { aud: Record<string, unknown> }) {
 
   const cerrar = useMutation({
     mutationFn: async () => {
-      const { data: pncs, error } = await supabase.from("pnc").select("numero_anio, estatus").eq("auditoria_id", aud.id as string);
+      const { data: hallazgosPend, error } = await supabase
+        .from("auditoria_hallazgos")
+        .select("id, descripcion, tipo")
+        .eq("auditoria_id", aud.id as string)
+        .neq("estatus", "cerrado");
       if (error) throw error;
-      const pend = (pncs ?? []).filter((p) => p.estatus !== "finalizado");
-      if (pend.length > 0) {
-        setPendientes(pend.map((p) => ({ numero_anio: p.numero_anio })));
-        throw new Error("Hay PNC pendientes de finalizar.");
+      if ((hallazgosPend ?? []).length > 0) {
+        setPendientes((hallazgosPend ?? []).map((h) => ({ numero_anio: h.descripcion.slice(0, 40) })));
+        throw new Error("Hay hallazgos sin cerrar.");
       }
       const { error: upErr } = await supabase.from("auditorias").update({ estatus: "cerrada" }).eq("id", aud.id as string);
       if (upErr) throw upErr;
