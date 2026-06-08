@@ -9,7 +9,7 @@ import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
 import { uploadFile, sanitizeSegment } from "@/lib/storage";
 import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { diasInfo } from "@/lib/pncUtils";
-import { deleteEvento } from "@/lib/calendarSync";
+
 import {
   StatusBadge, PNC_ESTATUS, PNC_RAZON_LABEL, PNC_ORIGEN_LABEL, PNC_METODOLOGIA_LABEL,
 } from "@/lib/badges";
