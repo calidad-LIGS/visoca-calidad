@@ -246,9 +246,6 @@ export function PncFormDialog({
               <Input className="mt-2" value={procesoTexto} onChange={(e) => setProcesoTexto(e.target.value)} placeholder="...o escribe el proceso libremente" />
             )}
           </F>
-          <F label="Metodología">
-            <Sel value={metodologia} onChange={setMetodologia} options={Object.entries(PNC_METODOLOGIA_LABEL).map(([value, label]) => ({ value, label }))} />
-          </F>
           <div className="flex items-end text-xs text-muted-foreground">{metodHint}</div>
           <F label="Fecha origen">
             <Input type="date" value={fechaOrigen} onChange={(e) => setFechaOrigen(e.target.value)} />
