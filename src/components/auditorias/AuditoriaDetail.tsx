@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
-  ChevronLeft, Plus, FileText, Download, Lock, ChevronDown, ExternalLink, Search, X,
+  ChevronLeft, Plus, FileText, Download, Lock, ChevronDown, ExternalLink, Search, X, Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -39,13 +39,17 @@ export function AuditoriaDetail({ id }: { id: string }) {
   const { data: empresas = [] } = useEmpresas();
   const { data: areas = [] } = useAreas();
 
-  const { data: aud, isLoading } = useQuery({
+  const { data: aud, isLoading, error: audError } = useQuery({
     queryKey: ["auditoria", id],
     queryFn: async () => {
       const { data, error } = await supabase.from("auditorias").select("*").eq("id", id).single();
-      if (error) throw error;
+      if (error) {
+        console.error("[AuditoriaDetail] Error cargando auditoría:", error, "ID:", id);
+        throw error;
+      }
       return data;
     },
+    retry: 2,
   });
 
   const { data: hallazgos = [] } = useQuery({
@@ -66,7 +70,26 @@ export function AuditoriaDetail({ id }: { id: string }) {
     },
   });
 
-  if (isLoading || !aud) return <div className="p-6 text-muted-foreground">Cargando…</div>;
+  if (isLoading) return (
+    <div className="p-6 text-muted-foreground flex items-center gap-2">
+      <Loader2 className="h-4 w-4 animate-spin" /> Cargando auditoría…
+    </div>
+  );
+
+  if (audError || !aud) return (
+    <div className="p-6">
+      <Button variant="ghost" size="sm" className="mb-4"
+        onClick={() => navigate({ to: "/auditorias" })}>
+        <ChevronLeft className="mr-1 h-4 w-4" /> Volver
+      </Button>
+      <div className="rounded-lg border border-danger/30 bg-danger/10 p-4">
+        <p className="font-semibold text-danger mb-1">No se pudo cargar la auditoría</p>
+        <p className="text-sm text-muted-foreground">
+          {audError?.message ?? "Registro no encontrado o sin permisos de acceso."}
+        </p>
+      </div>
+    </div>
+  );
 
   const empresaNombres = (aud.empresa_ids as string[]).map((eid) => empresas.find((e) => e.id === eid)?.clave ?? eid).join(", ");
   const stepIdx = STEPS.indexOf(aud.estatus);
