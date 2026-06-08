@@ -5,7 +5,7 @@ import { FileText, Download, ExternalLink, Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEmpresas, useAreas, useCargos } from "@/hooks/useCatalogos";
-import { uploadFile, sanitizeSegment } from "@/lib/storage";
+import { uploadFile, sanitizeSegment, safeExternalUrl } from "@/lib/storage";
 import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
