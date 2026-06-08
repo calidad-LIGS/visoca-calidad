@@ -205,6 +205,7 @@ export type Database = {
           area_id: string | null
           auditoria_id: string
           created_at: string
+          departamento: string | null
           descripcion: string
           estatus: string
           id: string
@@ -219,6 +220,7 @@ export type Database = {
           area_id?: string | null
           auditoria_id: string
           created_at?: string
+          departamento?: string | null
           descripcion: string
           estatus?: string
           id?: string
@@ -233,6 +235,7 @@ export type Database = {
           area_id?: string | null
           auditoria_id?: string
           created_at?: string
+          departamento?: string | null
           descripcion?: string
           estatus?: string
           id?: string
