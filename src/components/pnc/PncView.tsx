@@ -180,7 +180,7 @@ export function PncView() {
         <>
           <DataTable headers={["#", "Descripción", "Estatus", "Origen", "Área", "Razón", "F. Origen", "F. Compromiso", "Días"]} isLoading={isLoading} isEmpty={pncs.length === 0} empty="Sin PNC para los filtros aplicados.">
             {pncs.map((p) => {
-              const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "finalizado");
+              const info = diasInfo(p.fecha_origen, p.fecha_compromiso, p.estatus === "cerrado");
               const dotColor = { accent: "#1BC8A0", warning: "#F5A623", danger: "#E54B4B" }[info.color];
               return (
                 <Tr key={p.id} active={detailId === p.id} onClick={() => setDetailId(p.id)}>
@@ -192,7 +192,13 @@ export function PncView() {
                   <Td className="text-xs">{p.razon ? PNC_RAZON_LABEL[p.razon] : "—"}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_origen}</Td>
                   <Td className="whitespace-nowrap text-xs">{p.fecha_compromiso ?? "—"}</Td>
-                  <Td><span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span></Td>
+                  <Td>
+                    {p.estatus === "pendiente" ? (
+                      <span className="font-semibold" style={{ color: dotColor }}>{info.dias}</span>
+                    ) : (
+                      <span className="whitespace-nowrap text-xs text-accent">{p.fecha_cierre ?? "—"}</span>
+                    )}
+                  </Td>
                 </Tr>
               );
             })}
