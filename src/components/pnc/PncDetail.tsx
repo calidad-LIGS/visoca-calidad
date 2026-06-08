@@ -35,15 +35,6 @@ export interface Pnc {
   solucion: string | null; observaciones: string | null;
 }
 
-const NEXT_STATES: Record<string, { value: string; label: string }[]> = {
-  pendiente: [{ value: "en_proceso", label: "Pasar a En proceso" }],
-  en_proceso: [{ value: "verificacion", label: "Pasar a Verificación" }],
-  verificacion: [
-    { value: "finalizado", label: "Marcar Finalizado" },
-    { value: "en_proceso", label: "Regresar a En proceso (no favorable)" },
-  ],
-  finalizado: [],
-};
 
 export function PncDetail({
   pncId, onClose,
