@@ -81,7 +81,6 @@ function Body({ pncId }: { pncId: string }) {
           <span className={`flex items-center gap-1.5 text-xs ${colorClass}`}>
             <Clock className="h-3.5 w-3.5" /> {info.dias} días desde origen
           </span>
-          <CambiarEstatus pnc={pnc} />
         </div>
       </SheetHeader>
 
