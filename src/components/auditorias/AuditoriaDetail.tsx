@@ -545,7 +545,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{paso === 1 ? "Generar Acta de Resultados" : "Compromisos y subsanación"}</DialogTitle>
+            <DialogTitle>{paso === 1 ? "Generar Acta de Resultados" : "Cerrar acta"}</DialogTitle>
           </DialogHeader>
 
           {paso === 1 && (
@@ -563,14 +563,6 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Responsable del área</Label>
-                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Descripción de la auditoría (para el acta)</Label>
-                <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
-              </div>
               <div className="space-y-2">
                 <Label>Modo de generación</Label>
                 <div className="flex flex-col gap-2">
@@ -579,8 +571,8 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                       checked={modo === "sin_compromiso"}
                       onChange={() => setModo("sin_compromiso")} />
                     <div>
-                      <p className="text-sm font-medium">Sin compromisos</p>
-                      <p className="text-xs text-muted-foreground">Genera el acta con hallazgos en estado "Pendiente" sin compromisos definidos</p>
+                      <p className="text-sm font-medium">Solo generar</p>
+                      <p className="text-xs text-muted-foreground">Genera el acta con los hallazgos en estado "Pendiente", sin compromisos definidos</p>
                     </div>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer rounded-md border border-border p-3 hover:bg-elevated">
@@ -588,8 +580,8 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                       checked={modo === "con_compromiso"}
                       onChange={() => setModo("con_compromiso")} />
                     <div>
-                      <p className="text-sm font-medium">Con compromisos y subsanación</p>
-                      <p className="text-xs text-muted-foreground">Permite redactar el compromiso y subsanación por cada hallazgo</p>
+                      <p className="text-sm font-medium">Cerrar acta</p>
+                      <p className="text-xs text-muted-foreground">Redacta compromisos por hallazgo y subsanación; los hallazgos quedan "Finalizado"</p>
                     </div>
                   </label>
                 </div>
@@ -609,6 +601,10 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
           {paso === 2 && (
             <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
               <p className="text-sm font-medium">Departamento: <span className="text-primary">{deptoSelec}</span> — {hallazgosDepto.length} hallazgos</p>
+              <div className="space-y-1.5">
+                <Label>Responsable del área (firma el acta)</Label>
+                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} placeholder="Nombre de quien firma el acta" />
+              </div>
               {hallazgosDepto.map((h, i) => {
                 const hid = h.id ?? h.descripcion;
                 return (
@@ -624,18 +620,9 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                         rows={2}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Subsanación del responsable</Label>
-                      <Textarea
-                        value={compromisos[hid]?.subsanacion || ""}
-                        onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], subsanacion: e.target.value }}))}
-                        placeholder="¿Cómo se subsanó o se subsanará?"
-                        rows={2}
-                      />
-                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Responsable</Label>
+                        <Label className="text-xs">Responsable del hallazgo</Label>
                         <Input
                           value={compromisos[hid]?.responsable || ""}
                           onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], responsable: e.target.value }}))}
@@ -653,6 +640,15 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                   </div>
                 );
               })}
+              <div className="space-y-1.5">
+                <Label>Descripción de lo que se hizo para subsanar</Label>
+                <Textarea
+                  value={subsanacion}
+                  onChange={(e) => setSubsanacion(e.target.value)}
+                  placeholder="Describe las acciones tomadas para subsanar las no conformidades..."
+                  rows={3}
+                />
+              </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setPaso(1)}>← Volver</Button>
                 <Button onClick={generar} disabled={generating}>
