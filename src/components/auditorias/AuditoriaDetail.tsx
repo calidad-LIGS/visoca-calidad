@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable, Td } from "@/components/common/DataTable";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { StatusBadge, OutlineBadge, AUD_ESTATUS, HALLAZGO_TIPO_LABEL, APLICACION_LABEL } from "@/lib/badges";
+import { StatusBadge, OutlineBadge, AUD_ESTATUS, HALLAZGO_TIPO_LABEL } from "@/lib/badges";
 
 const STEPS = ["programada", "en_ejecucion", "con_hallazgos", "en_seguimiento", "cerrada"];
 
