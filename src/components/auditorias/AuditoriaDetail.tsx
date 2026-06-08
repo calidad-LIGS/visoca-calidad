@@ -394,7 +394,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const perms = usePermisos();
   const [open, setOpen] = useState(false);
   const [responsable, setResponsable] = useState("");
-  const [descripcion, setDescripcion] = useState("");
+  const [subsanacion, setSubsanacion] = useState("");
   const [generating, setGenerating] = useState(false);
   const [paso, setPaso] = useState<1 | 2>(1);
   const [deptoSelec, setDeptoSelec] = useState("");
@@ -445,6 +445,10 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const generar = async () => {
     setGenerating(true);
     try {
+      const conCompromiso = modo === "con_compromiso";
+      const responsableActa = conCompromiso
+        ? (responsable || "Por definir")
+        : ((aud.auditor_lider_id as string | null) || "Por definir");
       const data: ActaData = {
         codigo: "LIGS-CAL-04-F03",
         version: "01",
@@ -452,23 +456,23 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
         ultimaRevision: "Diciembre 2025",
         aplicacion: "ISO 9001:2015   |   OLA/OEA   |   Interno",
         codigoAuditoria: aud.codigo_auditoria as string,
-        descripcionAuditoria: descripcion || `Auditoría ${aud.tipo}`,
+        descripcionAuditoria: `realizada del ${aud.fecha_inicio ?? "—"} al ${aud.fecha_fin ?? "—"}`,
         departamento: deptoSelec,
-        responsable: responsable,
+        responsable: responsableActa,
         fecha: new Date().toISOString().slice(0, 10),
+        subsanacion: conCompromiso ? (subsanacion || "") : "",
         hallazgos: hallazgosDepto.map((h) => {
           const hid = h.id ?? h.descripcion;
           const comp = compromisos[hid];
+          const fechaDefault = h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría";
           return {
             tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
             descripcion: h.descripcion,
-            compromiso: modo === "con_compromiso" ? (comp?.compromiso || "—") : "Pendiente de definir",
-            subsanacion: modo === "con_compromiso" ? (comp?.subsanacion || "") : "",
-            fechaCompromiso: modo === "con_compromiso"
-              ? (comp?.fechaCompromiso || (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"))
-              : (h.tipo === "nc_mayor" ? "7 días hábiles" : "Próxima auditoría"),
-            responsable: modo === "con_compromiso" ? (comp?.responsable || responsable) : (h.responsable_nombre || responsable),
-            estatus: "Pendiente",
+            compromiso: conCompromiso ? (comp?.compromiso || "—") : "",
+            subsanacion: "",
+            fechaCompromiso: conCompromiso ? (comp?.fechaCompromiso || fechaDefault) : fechaDefault,
+            responsable: conCompromiso ? (comp?.responsable || responsable) : (h.responsable_nombre || ""),
+            estatus: conCompromiso ? "Finalizado" : "Pendiente",
           };
         }),
         orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
@@ -489,7 +493,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       await supabase.from("auditoria_actas").insert({
         auditoria_id: aud.id as string,
         departamento: deptoSelec,
-        responsable_nombre: responsable,
+        responsable_nombre: responsableActa,
         fecha_acta: data.fecha,
         contenido_json: JSON.parse(JSON.stringify(data)),
         pdf_url: res.path,
@@ -502,7 +506,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       qc.invalidateQueries({ queryKey: ["acta", aud.id] });
       qc.invalidateQueries({ queryKey: ["auditoria", aud.id] });
       toast.success(`Acta generada para: ${deptoSelec}`);
-      setPaso(1); setDeptoSelec(""); setModo("sin_compromiso");
+      setPaso(1); setDeptoSelec(""); setModo("sin_compromiso"); setResponsable(""); setSubsanacion("");
       setOpen(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -541,7 +545,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{paso === 1 ? "Generar Acta de Resultados" : "Compromisos y subsanación"}</DialogTitle>
+            <DialogTitle>{paso === 1 ? "Generar Acta de Resultados" : "Cerrar acta"}</DialogTitle>
           </DialogHeader>
 
           {paso === 1 && (
@@ -559,14 +563,6 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label>Responsable del área</Label>
-                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Descripción de la auditoría (para el acta)</Label>
-                <Textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} />
-              </div>
               <div className="space-y-2">
                 <Label>Modo de generación</Label>
                 <div className="flex flex-col gap-2">
@@ -575,8 +571,8 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                       checked={modo === "sin_compromiso"}
                       onChange={() => setModo("sin_compromiso")} />
                     <div>
-                      <p className="text-sm font-medium">Sin compromisos</p>
-                      <p className="text-xs text-muted-foreground">Genera el acta con hallazgos en estado "Pendiente" sin compromisos definidos</p>
+                      <p className="text-sm font-medium">Solo generar</p>
+                      <p className="text-xs text-muted-foreground">Genera el acta con los hallazgos en estado "Pendiente", sin compromisos definidos</p>
                     </div>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer rounded-md border border-border p-3 hover:bg-elevated">
@@ -584,8 +580,8 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                       checked={modo === "con_compromiso"}
                       onChange={() => setModo("con_compromiso")} />
                     <div>
-                      <p className="text-sm font-medium">Con compromisos y subsanación</p>
-                      <p className="text-xs text-muted-foreground">Permite redactar el compromiso y subsanación por cada hallazgo</p>
+                      <p className="text-sm font-medium">Cerrar acta</p>
+                      <p className="text-xs text-muted-foreground">Redacta compromisos por hallazgo y subsanación; los hallazgos quedan "Finalizado"</p>
                     </div>
                   </label>
                 </div>
@@ -605,6 +601,10 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
           {paso === 2 && (
             <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto">
               <p className="text-sm font-medium">Departamento: <span className="text-primary">{deptoSelec}</span> — {hallazgosDepto.length} hallazgos</p>
+              <div className="space-y-1.5">
+                <Label>Responsable del área (firma el acta)</Label>
+                <Input value={responsable} onChange={(e) => setResponsable(e.target.value)} placeholder="Nombre de quien firma el acta" />
+              </div>
               {hallazgosDepto.map((h, i) => {
                 const hid = h.id ?? h.descripcion;
                 return (
@@ -620,18 +620,9 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                         rows={2}
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Subsanación del responsable</Label>
-                      <Textarea
-                        value={compromisos[hid]?.subsanacion || ""}
-                        onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], subsanacion: e.target.value }}))}
-                        placeholder="¿Cómo se subsanó o se subsanará?"
-                        rows={2}
-                      />
-                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
-                        <Label className="text-xs">Responsable</Label>
+                        <Label className="text-xs">Responsable del hallazgo</Label>
                         <Input
                           value={compromisos[hid]?.responsable || ""}
                           onChange={(e) => setCompromisos(prev => ({ ...prev, [hid]: { ...prev[hid], responsable: e.target.value }}))}
@@ -649,6 +640,15 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
                   </div>
                 );
               })}
+              <div className="space-y-1.5">
+                <Label>Descripción de lo que se hizo para subsanar</Label>
+                <Textarea
+                  value={subsanacion}
+                  onChange={(e) => setSubsanacion(e.target.value)}
+                  placeholder="Describe las acciones tomadas para subsanar las no conformidades..."
+                  rows={3}
+                />
+              </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setPaso(1)}>← Volver</Button>
                 <Button onClick={generar} disabled={generating}>
@@ -717,7 +717,11 @@ function CierreHallazgosSection({ aud, hallazgos }: {
       if (pncIds.length > 0) {
         await supabase
           .from("pnc")
-          .update({ estatus: "verificacion" })
+          .update({
+            estatus: "cerrado",
+            fecha_cierre: new Date().toISOString().slice(0, 10),
+            solucion: "Cerrado desde auditoría — ver acta de resultados",
+          })
           .in("id", pncIds as string[]);
       }
 
@@ -800,12 +804,15 @@ function CierreSection({ aud }: { aud: Record<string, unknown> }) {
 
   const cerrar = useMutation({
     mutationFn: async () => {
-      const { data: pncs, error } = await supabase.from("pnc").select("numero_anio, estatus").eq("auditoria_id", aud.id as string);
+      const { data: hallazgosPend, error } = await supabase
+        .from("auditoria_hallazgos")
+        .select("id, descripcion, tipo")
+        .eq("auditoria_id", aud.id as string)
+        .neq("estatus", "cerrado");
       if (error) throw error;
-      const pend = (pncs ?? []).filter((p) => p.estatus !== "finalizado");
-      if (pend.length > 0) {
-        setPendientes(pend.map((p) => ({ numero_anio: p.numero_anio })));
-        throw new Error("Hay PNC pendientes de finalizar.");
+      if ((hallazgosPend ?? []).length > 0) {
+        setPendientes((hallazgosPend ?? []).map((h) => ({ numero_anio: h.descripcion.slice(0, 40) })));
+        throw new Error("Hay hallazgos sin cerrar.");
       }
       const { error: upErr } = await supabase.from("auditorias").update({ estatus: "cerrada" }).eq("id", aud.id as string);
       if (upErr) throw upErr;
@@ -826,7 +833,7 @@ function CierreSection({ aud }: { aud: Record<string, unknown> }) {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <span className="font-display font-semibold text-foreground">Cierre de auditoría</span>
-      <p className="mb-3 mt-1 text-sm text-muted-foreground">No se puede cerrar si hay hallazgos con PNC sin finalizar.</p>
+      <p className="mb-3 mt-1 text-sm text-muted-foreground">No se puede cerrar si hay hallazgos sin cerrar.</p>
       <Button size="sm" variant="outline" onClick={() => { setPendientes([]); setOpen(true); }}><Lock className="mr-1.5 h-4 w-4" /> Cerrar auditoría</Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -835,7 +842,7 @@ function CierreSection({ aud }: { aud: Record<string, unknown> }) {
           <p className="py-2 text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
           {pendientes.length > 0 && (
             <div className="rounded-md border border-danger/30 bg-danger/10 p-3 text-sm">
-              <p className="mb-1 font-medium text-danger">PNC pendientes:</p>
+              <p className="mb-1 font-medium text-danger">Hallazgos pendientes:</p>
               <ul className="list-inside list-disc font-mono text-xs text-foreground">
                 {pendientes.map((p) => (<li key={p.numero_anio}>{p.numero_anio}</li>))}
               </ul>

@@ -67,6 +67,7 @@ export interface ActaData {
   departamento: string;
   responsable: string;
   fecha: string;
+  subsanacion?: string;
   hallazgos: HallazgoActa[];
   orgNombre: string;
   orgLogoUrl: string | null;
@@ -129,7 +130,7 @@ export function ActaDocument({ d }: { d: ActaData }) {
         </View>
 
         <Text style={s.intro}>
-          Derivado de la auditoría {d.codigoAuditoria} — {d.descripcionAuditoria}, se obtuvieron las siguientes observaciones para el departamento de {d.departamento}:
+          Derivado de la auditoría {d.codigoAuditoria} {d.descripcionAuditoria}, se obtuvieron las siguientes observaciones para el departamento de {d.departamento}:
         </Text>
 
         <View style={s.table}>
@@ -171,6 +172,11 @@ export function ActaDocument({ d }: { d: ActaData }) {
           <Text style={s.subsanText}>
             Mediante la presente queda declarada la subsanación de las No conformidades marcadas durante la auditoría interna realizada al departamento de {d.departamento}.
           </Text>
+          {d.subsanacion && (
+            <Text style={{ marginTop: 4, fontSize: 8 }}>
+              Acciones tomadas: {d.subsanacion}
+            </Text>
+          )}
         </View>
 
         <View style={s.signRow}>
