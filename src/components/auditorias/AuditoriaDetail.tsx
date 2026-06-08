@@ -57,7 +57,7 @@ export function AuditoriaDetail({ id }: { id: string }) {
     queryFn: async () => {
       const { data, error } = await supabase.from("auditoria_hallazgos").select("*, pnc:pnc_id(numero_anio)").eq("auditoria_id", id).order("created_at");
       if (error) throw error;
-      return data as Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; pnc: { numero_anio: string } | null }>;
+      return data as Array<{ id: string; tipo: string; descripcion: string; departamento: string | null; area_id: string | null; responsable_nombre: string | null; estatus: string; pnc_id: string | null; cerrado?: boolean; plan_mejora_url?: string | null; pnc: { numero_anio: string } | null }>;
     },
   });
 
