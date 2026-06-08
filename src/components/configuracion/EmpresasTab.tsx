@@ -30,7 +30,7 @@ interface Empresa {
   activo: boolean;
 }
 
-const CLAVES = ["GAP", "LIGS", "TV", "CORP", "OTRA"];
+
 
 export function EmpresasTab() {
   const qc = useQueryClient();
@@ -149,18 +149,12 @@ export function EmpresasTab() {
             </div>
             <div className="space-y-1.5">
               <Label>Clave</Label>
-              <Select value={clave} onValueChange={setClave}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CLAVES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                value={clave}
+                onChange={(e) => setClave(e.target.value.toUpperCase().slice(0, 10))}
+                placeholder="Ej: GAP, LIGS, TV, CORP..."
+                maxLength={10}
+              />
             </div>
           </div>
           <DialogFooter>
