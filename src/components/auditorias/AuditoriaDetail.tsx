@@ -717,7 +717,11 @@ function CierreHallazgosSection({ aud, hallazgos }: {
       if (pncIds.length > 0) {
         await supabase
           .from("pnc")
-          .update({ estatus: "verificacion" })
+          .update({
+            estatus: "cerrado",
+            fecha_cierre: new Date().toISOString().slice(0, 10),
+            solucion: "Cerrado desde auditoría — ver acta de resultados",
+          })
           .in("id", pncIds as string[]);
       }
 
