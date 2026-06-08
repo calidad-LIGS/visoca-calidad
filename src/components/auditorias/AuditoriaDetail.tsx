@@ -394,7 +394,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const perms = usePermisos();
   const [open, setOpen] = useState(false);
   const [responsable, setResponsable] = useState("");
-  const [descripcion, setDescripcion] = useState("");
+  const [subsanacion, setSubsanacion] = useState("");
   const [generating, setGenerating] = useState(false);
   const [paso, setPaso] = useState<1 | 2>(1);
   const [deptoSelec, setDeptoSelec] = useState("");
