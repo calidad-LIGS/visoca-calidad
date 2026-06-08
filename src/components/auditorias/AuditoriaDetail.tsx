@@ -346,6 +346,7 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   areas: { id: string; nombre: string }[];
 }) {
   void areas;
+  void empresaNombres;
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const perms = usePermisos();
