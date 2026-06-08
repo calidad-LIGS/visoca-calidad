@@ -69,7 +69,9 @@ export async function getSignedUrl(
   expiresIn = 3600,
 ): Promise<string | null> {
   if (!path) return null;
-  if (isAbsoluteUrl(path)) return path;
+  // Solo se permiten URLs absolutas hacia dominios de confianza para evitar
+  // redirecciones abiertas almacenadas por usuarios maliciosos.
+  if (isAbsoluteUrl(path)) return isAllowedExternalUrl(path) ? path : null;
   const { data, error } = await supabase.storage
     .from(bucket)
     .createSignedUrl(path, expiresIn);
@@ -79,7 +81,7 @@ export async function getSignedUrl(
 
 /** URL pública para buckets públicos (p. ej. logos de la organización). */
 export function getPublicUrl(bucket: string, path: string): string {
-  if (isAbsoluteUrl(path)) return path;
+  if (isAbsoluteUrl(path)) return isAllowedExternalUrl(path) ? path : "";
   return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 
