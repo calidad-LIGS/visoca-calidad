@@ -842,7 +842,7 @@ function CierreSection({ aud }: { aud: Record<string, unknown> }) {
           <p className="py-2 text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
           {pendientes.length > 0 && (
             <div className="rounded-md border border-danger/30 bg-danger/10 p-3 text-sm">
-              <p className="mb-1 font-medium text-danger">PNC pendientes:</p>
+              <p className="mb-1 font-medium text-danger">Hallazgos pendientes:</p>
               <ul className="list-inside list-disc font-mono text-xs text-foreground">
                 {pendientes.map((p) => (<li key={p.numero_anio}>{p.numero_anio}</li>))}
               </ul>
