@@ -367,22 +367,30 @@ function ActaSection({ aud, hallazgos, acta, empresaNombres, areas }: {
   const generar = async () => {
     setGenerating(true);
     try {
+      const fechaHoy = new Date().toISOString().slice(0, 10);
       const data: ActaData = {
-        codigo: aud.codigo_auditoria as string,
-        empresaNombre: empresaNombres,
-        departamento, responsable,
-        fecha: new Date().toISOString().slice(0, 10),
-        descripcion,
-        aplicacion: APLICACION_LABEL["iso_ola"],
+        codigo: `ACTA-${aud.codigo_auditoria as string}`,
         version: "1.0",
-        orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
-        orgLogoUrl: orgConfig?.logo_url ?? null,
+        entradaVigor: (aud.fecha_inicio as string) ?? fechaHoy,
+        ultimaRevision: fechaHoy,
+        aplicacion: APLICACION_LABEL["iso_ola"],
+        codigoAuditoria: aud.codigo_auditoria as string,
+        descripcionAuditoria: `Auditoría ${aud.tipo} — ${empresaNombres} (${aud.fecha_inicio ?? ""} → ${aud.fecha_fin ?? ""})`,
+        departamento,
+        responsable,
+        fecha: fechaHoy,
         hallazgos: hallazgos.map((h) => ({
-          tipo: h.tipo, descripcion: h.descripcion,
+          tipo: h.tipo as "nc_mayor" | "nc_menor" | "oportunidad_mejora",
+          descripcion: h.descripcion,
           responsable: h.responsable_nombre ?? responsable,
-          compromiso: "Acción correctiva", fechaCompromiso: aud.fecha_fin as string ?? "",
+          compromiso: "Acción correctiva",
+          fechaCompromiso: (aud.fecha_fin as string) ?? "",
           estatus: h.estatus,
         })),
+        orgNombre: orgConfig?.nombre_completo ?? "LIGS Group",
+        orgLogoUrl: orgConfig?.logo_url ?? null,
+        jefeCalidadNombre: perfil?.nombre_completo ?? "—",
+        jefeCalidadPuesto: "Jefe de Calidad",
       };
       const blob = await generarActaBlob(data);
       const file = new File([blob], `acta-${aud.codigo_auditoria}.pdf`, { type: "application/pdf" });
