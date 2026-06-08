@@ -19,6 +19,7 @@ import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated.configuracion'
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated.calendario'
 import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authenticated.auditorias'
+import { Route as AuthenticatedAuditoriasIndexRouteImport } from './routes/_authenticated.auditorias.index'
 import { Route as ApiPublicEnsureBucketsRouteImport } from './routes/api/public/ensure-buckets'
 import { Route as AuthenticatedDocumentosRedRouteImport } from './routes/_authenticated.documentos.red'
 import { Route as AuthenticatedAuditoriasIdRouteImport } from './routes/_authenticated.auditorias.$id'
@@ -74,6 +75,12 @@ const AuthenticatedAuditoriasRoute = AuthenticatedAuditoriasRouteImport.update({
   path: '/auditorias',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAuditoriasIndexRoute =
+  AuthenticatedAuditoriasIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAuditoriasRoute,
+  } as any)
 const ApiPublicEnsureBucketsRoute = ApiPublicEnsureBucketsRouteImport.update({
   id: '/api/public/ensure-buckets',
   path: '/api/public/ensure-buckets',
@@ -105,11 +112,11 @@ export interface FileRoutesByFullPath {
   '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
+  '/auditorias/': typeof AuthenticatedAuditoriasIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
@@ -119,6 +126,7 @@ export interface FileRoutesByTo {
   '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
+  '/auditorias': typeof AuthenticatedAuditoriasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -135,6 +143,7 @@ export interface FileRoutesById {
   '/_authenticated/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/_authenticated/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
+  '/_authenticated/auditorias/': typeof AuthenticatedAuditoriasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,11 +160,11 @@ export interface FileRouteTypes {
     | '/auditorias/$id'
     | '/documentos/red'
     | '/api/public/ensure-buckets'
+    | '/auditorias/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
     | '/sitemap.xml'
-    | '/auditorias'
     | '/calendario'
     | '/configuracion'
     | '/documentos'
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/auditorias/$id'
     | '/documentos/red'
     | '/api/public/ensure-buckets'
+    | '/auditorias'
   id:
     | '__root__'
     | '/_authenticated'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/_authenticated/auditorias/$id'
     | '/_authenticated/documentos/red'
     | '/api/public/ensure-buckets'
+    | '/_authenticated/auditorias/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -261,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAuditoriasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/auditorias/': {
+      id: '/_authenticated/auditorias/'
+      path: '/'
+      fullPath: '/auditorias/'
+      preLoaderRoute: typeof AuthenticatedAuditoriasIndexRouteImport
+      parentRoute: typeof AuthenticatedAuditoriasRoute
+    }
     '/api/public/ensure-buckets': {
       id: '/api/public/ensure-buckets'
       path: '/api/public/ensure-buckets'
@@ -287,11 +305,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAuditoriasRouteChildren {
   AuthenticatedAuditoriasIdRoute: typeof AuthenticatedAuditoriasIdRoute
+  AuthenticatedAuditoriasIndexRoute: typeof AuthenticatedAuditoriasIndexRoute
 }
 
 const AuthenticatedAuditoriasRouteChildren: AuthenticatedAuditoriasRouteChildren =
   {
     AuthenticatedAuditoriasIdRoute: AuthenticatedAuditoriasIdRoute,
+    AuthenticatedAuditoriasIndexRoute: AuthenticatedAuditoriasIndexRoute,
   }
 
 const AuthenticatedAuditoriasRouteWithChildren =
