@@ -412,6 +412,7 @@ function VersionesTab({ doc }: { doc: Documento }) {
 function CargosTab({ doc }: { doc: Documento }) {
   const qc = useQueryClient();
   const { data: cargos = [] } = useCargos();
+  const [buscadorCargo, setBuscadorCargo] = useState("");
   const { data: asignados = [] } = useQuery({
     queryKey: ["doc-cargos", doc.id],
     queryFn: async () => {
@@ -442,12 +443,23 @@ function CargosTab({ doc }: { doc: Documento }) {
   });
 
   const asignadosSet = new Set(asignados.map((a) => a.cargo_id));
+  const activos = cargos.filter((c) => c.activo);
+  const cargosFiltrados = buscadorCargo
+    ? activos.filter((c) =>
+        c.nombre.toLowerCase().includes(buscadorCargo.toLowerCase()))
+    : activos;
 
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground">Selecciona los cargos a los que aplica este documento.</p>
+      <Input
+        value={buscadorCargo}
+        onChange={(e) => setBuscadorCargo(e.target.value)}
+        placeholder="Buscar cargo..."
+        className="mb-2"
+      />
       <div className="flex flex-wrap gap-2">
-        {cargos.filter((c) => c.activo).map((c) => {
+        {cargosFiltrados.map((c) => {
           const on = asignadosSet.has(c.id);
           return (
             <button
@@ -464,6 +476,10 @@ function CargosTab({ doc }: { doc: Documento }) {
           );
         })}
       </div>
+      {buscadorCargo && cargosFiltrados.length === 0 && (
+        <p className="text-xs text-muted-foreground py-2">No hay cargos que coincidan.</p>
+      )}
     </div>
   );
 }
+
