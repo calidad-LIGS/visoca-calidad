@@ -8,7 +8,7 @@ import { useEmpresas, useAreas, useUsuarios } from "@/hooks/useCatalogos";
 import { nextPncNumero, addBusinessDays, toISODate } from "@/lib/pncUtils";
 import { upsertEvento } from "@/lib/calendarSync";
 import {
-  PNC_ORIGEN_LABEL, PNC_RAZON_LABEL, PNC_METODOLOGIA_LABEL,
+  PNC_ORIGEN_LABEL, PNC_RAZON_LABEL,
 } from "@/lib/badges";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
