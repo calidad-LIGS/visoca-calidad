@@ -41,16 +41,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (uid: string) => {
-    const [{ data: perfilData }, { data: rolesData }] = await Promise.all([
-      supabase
-        .from("usuarios")
-        .select("id, nombre_completo, email, empresa_id, activo")
-        .eq("id", uid)
-        .maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
-    ]);
+    const [{ data: perfilData, error: perfilErr }, { data: rolesData, error: rolesErr }] =
+      await Promise.all([
+        supabase
+          .from("usuarios")
+          .select("id, nombre_completo, email, empresa_id, activo")
+          .eq("id", uid)
+          .maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid),
+      ]);
+
+    if (perfilErr) console.error("[Auth] Error cargando perfil:", perfilErr);
+    if (rolesErr) console.error("[Auth] Error cargando roles:", rolesErr);
+
+    // Los roles viven exclusivamente en la tabla user_roles (regla de seguridad).
+    // Si la query falla o no devuelve roles, el array queda vacío y el fallback
+    // de permisos (sinRoles en permisos.ts) mantiene la UI utilizable.
+    const finalRoles = (rolesData ?? []).map((r) => r.role as AppRole);
+
     setPerfil(perfilData ?? null);
-    setRoles((rolesData ?? []).map((r) => r.role as AppRole));
+    setRoles(finalRoles);
   }, []);
 
   useEffect(() => {
