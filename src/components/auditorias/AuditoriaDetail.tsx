@@ -150,6 +150,8 @@ export function AuditoriaDetail({ id }: { id: string }) {
 
       <ActaSection aud={aud} hallazgos={hallazgos} acta={acta} empresaNombres={empresaNombres} areas={areas} />
 
+      <CierreHallazgosSection aud={aud} hallazgos={hallazgos} />
+
       <CierreSection aud={aud} />
 
       <div className="h-10" />
