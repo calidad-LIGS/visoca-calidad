@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsuarios } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
@@ -26,7 +26,6 @@ interface Auditoria {
 
 export function AuditoriasView() {
   const perms = usePermisos();
-  const navigate = useNavigate();
   const { data: usuarios = [] } = useUsuarios();
   const [tab, setTab] = useState("todas");
   const [formOpen, setFormOpen] = useState(false);
