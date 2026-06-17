@@ -5,12 +5,13 @@ import {
   type Node, type Edge, MarkerType, useNodesState, useEdgesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Network, Sparkles } from "lucide-react";
+import { Network, Sparkles, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DOC_TIPO_LABEL } from "@/lib/badges";
 import { DocumentoFicha } from "./DocumentoFicha";
 import type { Documento } from "./DocumentoFormDialog";
@@ -80,6 +81,8 @@ function getEdgeStyle(tipoRelacion: string) {
 export function DocumentosRed() {
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscador, setBuscador] = useState(false);
+  const [cargoSearch, setCargoSearch] = useState("");
+  const [cargoSeleccionado, setCargoSeleccionado] = useState<string | null>(null);
 
   const { data: docs = [] } = useQuery({
     queryKey: ["documentos-red-nodes"],
@@ -100,6 +103,30 @@ export function DocumentosRed() {
         .from("documentos_relaciones").select("documento_origen_id, documento_destino_id, tipo_relacion");
       if (error) throw error;
       return data as Rel[];
+    },
+  });
+
+  const { data: cargos = [] } = useQuery({
+    queryKey: ["cargos-red"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cargos")
+        .select("id, nombre")
+        .eq("activo", true)
+        .order("nombre");
+      if (error) throw error;
+      return data as { id: string; nombre: string }[];
+    },
+  });
+
+  const { data: docCargos = [] } = useQuery({
+    queryKey: ["documentos-cargos-red"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documentos_cargos")
+        .select("documento_id, cargo_id");
+      if (error) throw error;
+      return data as { documento_id: string; cargo_id: string }[];
     },
   });
 

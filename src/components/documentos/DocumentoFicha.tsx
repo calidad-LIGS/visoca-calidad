@@ -250,13 +250,27 @@ function RelacionesTab({ doc, onOpenDoc }: { doc: Documento; onOpenDoc?: (id: st
         const isOrigen = r.documento_origen_id === doc.id;
         const otherId = isOrigen ? r.documento_destino_id : r.documento_origen_id;
         const other = docMap.get(otherId) ?? { id: otherId, codigo: "—", nombre: "Documento" };
+
+        const REL_INVERSE: Record<string, string> = {
+          padre: "Hijo de",
+          hijo: "Padre de",
+          sustituto: "Sustituido por",
+          sustituido_por: "Sustituye a",
+          referencia: "Referenciado por",
+          referencia_mutua: "Se mencionan mutuamente",
+        };
+
         return (
           <div key={r.id} className="flex items-center justify-between rounded-md border border-border p-2">
             <button
               className="flex items-center gap-2 text-left"
               onClick={() => onOpenDoc?.(other.id)}
             >
-              <OutlineBadge>{REL_LABELS[r.tipo_relacion]}</OutlineBadge>
+              <OutlineBadge>
+                {isOrigen
+                  ? (REL_LABELS[r.tipo_relacion] ?? r.tipo_relacion)
+                  : (REL_INVERSE[r.tipo_relacion] ?? r.tipo_relacion)}
+              </OutlineBadge>
               <span className="font-mono text-xs text-primary">{other.codigo}</span>
               <span className="text-sm text-foreground">{other.nombre}</span>
             </button>
