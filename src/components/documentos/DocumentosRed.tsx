@@ -201,9 +201,9 @@ export function DocumentosRed() {
         }
       />
 
-      {docs.length === 0 ? (
+      {initialNodes.length === 0 ? (
         <EmptyState icon={<Network className="h-10 w-10" />} title="No hay documentos para graficar" />
-      ) : rels.length === 0 ? (
+      ) : initialEdges.length === 0 ? (
         <EmptyState
           icon={<Network className="h-10 w-10" />}
           title="Aún no hay relaciones entre documentos"
@@ -216,6 +216,46 @@ export function DocumentosRed() {
         />
       ) : (
         <>
+          {cargoSeleccionado ? (
+            <div className="mb-3 flex items-center gap-2">
+              <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
+                Cargo: {cargos.find((c) => c.id === cargoSeleccionado)?.nombre}
+              </span>
+              <button
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => { setCargoSeleccionado(null); setCargoSearch(""); }}
+              >
+                <X className="h-3 w-3" /> Limpiar
+              </button>
+            </div>
+          ) : (
+            <div className="relative mb-3">
+              <Input
+                value={cargoSearch}
+                onChange={(e) => setCargoSearch(e.target.value)}
+                placeholder="Buscar cargo para filtrar documentos..."
+                className="max-w-sm"
+              />
+              {cargoSearch && (
+                <div className="absolute z-10 mt-1 max-h-48 max-w-sm overflow-auto rounded-md border border-border bg-surface shadow-lg">
+                  {cargos
+                    .filter((c) => c.nombre.toLowerCase().includes(cargoSearch.toLowerCase()))
+                    .map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10"
+                        onClick={() => { setCargoSeleccionado(c.id); setCargoSearch(""); }}
+                      >
+                        {c.nombre}
+                      </button>
+                    ))}
+                  {cargos.filter((c) => c.nombre.toLowerCase().includes(cargoSearch.toLowerCase())).length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">Sin coincidencias.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="mb-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
             {Object.entries(DOC_TIPO_LABEL).map(([tipo, label]) => (
               <span key={tipo} className="flex items-center gap-1.5">
