@@ -238,14 +238,16 @@ export function DocumentosView() {
           options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
         <FilterSelect value={fTipo} onChange={setFTipo} placeholder="Tipo"
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
+        <FilterSelect value={fCargo} onChange={setFCargo} placeholder="Cargo"
+          options={cargos.filter((c) => c.activo).map((c) => ({ value: c.id, label: c.nombre }))} />
       </div>
 
       <div className="mb-4">
-        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || search.trim() !== "") ? (
+        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || fCargo !== "all" || search.trim() !== "") ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{total} resultados</span>
             <button
-              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setSearch(""); setPage(0); }}
+              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setFCargo("all"); setSearch(""); setPage(0); }}
               className="flex items-center gap-1 text-primary hover:underline"
             >
               <X className="h-3 w-3" /> Limpiar filtros
