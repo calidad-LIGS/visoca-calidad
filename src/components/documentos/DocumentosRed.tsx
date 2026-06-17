@@ -87,7 +87,7 @@ export function DocumentosRed() {
       const { data, error } = await supabase
         .from("documentos")
         .select("id, empresa_id, tipo, codigo, nombre, area_id, version, fecha_ultima_edicion, estatus, origen, nivel, aplicacion, comentarios, archivo_url, drive_url")
-        .in("estatus", ["vigente", "en_revision"]);
+        .eq("estatus", "vigente");
       if (error) throw error;
       return data as Documento[];
     },
