@@ -30,20 +30,37 @@ export function DocumentosView() {
   const perms = usePermisos();
   const { data: empresas = [] } = useEmpresas();
   const { data: areas = [] } = useAreas();
+  const { data: cargos = [] } = useCargos();
 
   const [tab, setTab] = useState("vigentes");
   const [search, setSearch] = useState("");
   const [fEmpresa, setFEmpresa] = useState("all");
   const [fArea, setFArea] = useState("all");
   const [fTipo, setFTipo] = useState("all");
+  const [fCargo, setFCargo] = useState("all");
   const [page, setPage] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Documento | null>(null);
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscadorIA, setBuscadorIA] = useState(false);
 
+  // IDs de documentos asignados al cargo seleccionado
+  const { data: cargoDocIds } = useQuery({
+    queryKey: ["documentos-cargo-ids", fCargo],
+    enabled: fCargo !== "all",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documentos_cargos")
+        .select("documento_id")
+        .eq("cargo_id", fCargo);
+      if (error) throw error;
+      return (data as { documento_id: string }[]).map((r) => r.documento_id);
+    },
+    staleTime: 60_000,
+  });
+
   // Reset de página al cambiar filtros
-  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, search]);
+  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, fCargo, search]);
 
   // Tabla paginada (server-side)
   const { data: documentos = [], isLoading } = useQuery({
