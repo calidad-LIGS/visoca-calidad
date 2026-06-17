@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Plus, FileDown, Search, Eye, Pencil, Sparkles, Network, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
+import { useEmpresas, useAreas, useCargos } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataTable, Td, Tr } from "@/components/common/DataTable";
