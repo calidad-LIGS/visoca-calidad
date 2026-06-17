@@ -151,6 +151,7 @@ export function DocumentosView() {
     if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
     if (fArea !== "all") q = q.eq("area_id", fArea);
     if (fTipo !== "all") q = q.eq("tipo", fTipo);
+    if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
     const s = search.trim();
     if (s) {
       const safe = s.replace(/[%,()]/g, " ");
