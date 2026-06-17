@@ -64,7 +64,8 @@ export function DocumentosView() {
 
   // Tabla paginada (server-side)
   const { data: documentos = [], isLoading } = useQuery({
-    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, search, page],
+    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, fCargo, cargoDocIds, search, page],
+    enabled: fCargo === "all" || cargoDocIds !== undefined,
     queryFn: async () => {
       let q = supabase.from("documentos").select(DOC_COLS);
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
@@ -72,6 +73,7 @@ export function DocumentosView() {
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
       if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const safe = s.replace(/[%,()]/g, " ");
@@ -88,7 +90,8 @@ export function DocumentosView() {
 
   // Conteo total para la paginación (mismos filtros)
   const { data: total = 0 } = useQuery({
-    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, search],
+    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, fCargo, cargoDocIds, search],
+    enabled: fCargo === "all" || cargoDocIds !== undefined,
     queryFn: async () => {
       let q = supabase.from("documentos").select("*", { count: "exact", head: true });
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
@@ -96,6 +99,7 @@ export function DocumentosView() {
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
       if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const safe = s.replace(/[%,()]/g, " ");
