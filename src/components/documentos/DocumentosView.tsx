@@ -51,7 +51,6 @@ export function DocumentosView() {
     queryFn: async () => {
       let q = supabase.from("documentos").select(DOC_COLS);
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
-      else if (tab === "revision") q = q.eq("estatus", "en_revision");
       else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
@@ -76,7 +75,6 @@ export function DocumentosView() {
     queryFn: async () => {
       let q = supabase.from("documentos").select("*", { count: "exact", head: true });
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
-      else if (tab === "revision") q = q.eq("estatus", "en_revision");
       else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
@@ -121,7 +119,6 @@ export function DocumentosView() {
   const counts = useMemo(() => ({
     vigentes: estatusRows.filter((d) => d.estatus === "vigente").length,
     todos: estatusRows.length,
-    revision: estatusRows.filter((d) => d.estatus === "en_revision").length,
     historico: estatusRows.filter((d) => ["sustituido", "eliminado"].includes(d.estatus)).length,
   }), [estatusRows]);
 
@@ -129,7 +126,6 @@ export function DocumentosView() {
   const exportXLS = async () => {
     let q = supabase.from("documentos").select(DOC_COLS);
     if (tab === "vigentes") q = q.eq("estatus", "vigente");
-    else if (tab === "revision") q = q.eq("estatus", "en_revision");
     else if (tab === "historico") q = q.in("estatus", ["sustituido", "eliminado"]);
     if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
     if (fArea !== "all") q = q.eq("area_id", fArea);
@@ -153,7 +149,6 @@ export function DocumentosView() {
       Versión: d.version,
       "Ult. Versión (fecha)": d.fecha_ultima_edicion,
       Estatus: DOC_ESTATUS[d.estatus]?.label ?? d.estatus,
-      Origen: d.origen,
       Nivel: d.nivel,
       Comentarios: d.comentarios,
     }));
@@ -253,7 +248,7 @@ export function DocumentosView() {
       ) : (
         <>
           <DataTable
-            headers={["Empresa", "Tipo", "Código", "Nombre", "Área", "Versión", "Fecha", "Estatus", "Origen", "Nivel", ""]}
+            headers={["Empresa", "Tipo", "Código", "Nombre", "Área", "Versión", "Fecha", "Estatus", "Nivel", ""]}
             isLoading={isLoading}
             isEmpty={documentos.length === 0}
             empty="Sin documentos para los filtros aplicados."
@@ -268,8 +263,7 @@ export function DocumentosView() {
                 <Td className="font-mono text-xs">{d.version}</Td>
                 <Td className="whitespace-nowrap text-xs">{d.fecha_ultima_edicion}</Td>
                 <Td><StatusBadge cfg={DOC_ESTATUS[d.estatus]} /></Td>
-                <Td className="text-xs">{d.origen}</Td>
-                <Td className="text-center">{d.nivel}</Td>
+                <Td className="text-center">{d.nivel ? `N${d.nivel}` : "—"}</Td>
                 <Td>
                   <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                     <Button variant="ghost" size="icon" aria-label="Ver detalles" onClick={() => setFichaId(d.id)}><Eye className="h-4 w-4" /></Button>
