@@ -5,12 +5,13 @@ import {
   type Node, type Edge, MarkerType, useNodesState, useEdgesState,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Network, Sparkles } from "lucide-react";
+import { Network, Sparkles, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DOC_TIPO_LABEL } from "@/lib/badges";
 import { DocumentoFicha } from "./DocumentoFicha";
 import type { Documento } from "./DocumentoFormDialog";
@@ -80,6 +81,8 @@ function getEdgeStyle(tipoRelacion: string) {
 export function DocumentosRed() {
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscador, setBuscador] = useState(false);
+  const [cargoSearch, setCargoSearch] = useState("");
+  const [cargoSeleccionado, setCargoSeleccionado] = useState<string | null>(null);
 
   const { data: docs = [] } = useQuery({
     queryKey: ["documentos-red-nodes"],
@@ -103,9 +106,41 @@ export function DocumentosRed() {
     },
   });
 
+  const { data: cargos = [] } = useQuery({
+    queryKey: ["cargos-red"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cargos")
+        .select("id, nombre")
+        .eq("activo", true)
+        .order("nombre");
+      if (error) throw error;
+      return data as { id: string; nombre: string }[];
+    },
+  });
+
+  const { data: docCargos = [] } = useQuery({
+    queryKey: ["documentos-cargos-red"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documentos_cargos")
+        .select("documento_id, cargo_id");
+      if (error) throw error;
+      return data as { documento_id: string; cargo_id: string }[];
+    },
+  });
+
   const { initialNodes, initialEdges } = useMemo(() => {
-    const nodes: Node[] = docs.map((d) => {
-      const nivelDocs = docs.filter((x) => x.nivel === d.nivel);
+    const docsVisibles = cargoSeleccionado
+      ? docs.filter((d) => docCargos.some((dc) => dc.documento_id === d.id && dc.cargo_id === cargoSeleccionado))
+      : docs;
+    const docIdsVisibles = new Set(docsVisibles.map((d) => d.id));
+    const relsVisibles = rels.filter(
+      (r) => docIdsVisibles.has(r.documento_origen_id) && docIdsVisibles.has(r.documento_destino_id)
+    );
+
+    const nodes: Node[] = docsVisibles.map((d) => {
+      const nivelDocs = docsVisibles.filter((x) => x.nivel === d.nivel);
       const nivelIdx = nivelDocs.indexOf(d);
       const xSpacing = Math.max(180, 900 / Math.max(nivelDocs.length, 1));
       return {
@@ -128,7 +163,7 @@ export function DocumentosRed() {
         style: getNodeStyle(d.tipo),
       };
     });
-    const edges: Edge[] = rels.map((r, i) => ({
+    const edges: Edge[] = relsVisibles.map((r, i) => ({
       id: `e${i}`,
       source: r.documento_origen_id,
       target: r.documento_destino_id,
@@ -138,7 +173,7 @@ export function DocumentosRed() {
       ...getEdgeStyle(r.tipo_relacion),
     }));
     return { initialNodes: nodes, initialEdges: edges };
-  }, [docs, rels]);
+  }, [docs, rels, cargoSeleccionado, docCargos]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -166,9 +201,9 @@ export function DocumentosRed() {
         }
       />
 
-      {docs.length === 0 ? (
+      {initialNodes.length === 0 ? (
         <EmptyState icon={<Network className="h-10 w-10" />} title="No hay documentos para graficar" />
-      ) : rels.length === 0 ? (
+      ) : initialEdges.length === 0 ? (
         <EmptyState
           icon={<Network className="h-10 w-10" />}
           title="Aún no hay relaciones entre documentos"
@@ -181,6 +216,46 @@ export function DocumentosRed() {
         />
       ) : (
         <>
+          {cargoSeleccionado ? (
+            <div className="mb-3 flex items-center gap-2">
+              <span className="rounded-full bg-primary/10 px-2 py-1 text-xs text-primary">
+                Cargo: {cargos.find((c) => c.id === cargoSeleccionado)?.nombre}
+              </span>
+              <button
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => { setCargoSeleccionado(null); setCargoSearch(""); }}
+              >
+                <X className="h-3 w-3" /> Limpiar
+              </button>
+            </div>
+          ) : (
+            <div className="relative mb-3">
+              <Input
+                value={cargoSearch}
+                onChange={(e) => setCargoSearch(e.target.value)}
+                placeholder="Buscar cargo para filtrar documentos..."
+                className="max-w-sm"
+              />
+              {cargoSearch && (
+                <div className="absolute z-10 mt-1 max-h-48 max-w-sm overflow-auto rounded-md border border-border bg-surface shadow-lg">
+                  {cargos
+                    .filter((c) => c.nombre.toLowerCase().includes(cargoSearch.toLowerCase()))
+                    .map((c) => (
+                      <button
+                        key={c.id}
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-primary/10"
+                        onClick={() => { setCargoSeleccionado(c.id); setCargoSearch(""); }}
+                      >
+                        {c.nombre}
+                      </button>
+                    ))}
+                  {cargos.filter((c) => c.nombre.toLowerCase().includes(cargoSearch.toLowerCase())).length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">Sin coincidencias.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="mb-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
             {Object.entries(DOC_TIPO_LABEL).map(([tipo, label]) => (
               <span key={tipo} className="flex items-center gap-1.5">
