@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Plus, FileDown, Search, Eye, Pencil, Sparkles, Network, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { useEmpresas, useAreas } from "@/hooks/useCatalogos";
+import { useEmpresas, useAreas, useCargos } from "@/hooks/useCatalogos";
 import { usePermisos } from "@/lib/permisos";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataTable, Td, Tr } from "@/components/common/DataTable";
@@ -30,24 +30,42 @@ export function DocumentosView() {
   const perms = usePermisos();
   const { data: empresas = [] } = useEmpresas();
   const { data: areas = [] } = useAreas();
+  const { data: cargos = [] } = useCargos();
 
   const [tab, setTab] = useState("vigentes");
   const [search, setSearch] = useState("");
   const [fEmpresa, setFEmpresa] = useState("all");
   const [fArea, setFArea] = useState("all");
   const [fTipo, setFTipo] = useState("all");
+  const [fCargo, setFCargo] = useState("all");
   const [page, setPage] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Documento | null>(null);
   const [fichaId, setFichaId] = useState<string | null>(null);
   const [buscadorIA, setBuscadorIA] = useState(false);
 
+  // IDs de documentos asignados al cargo seleccionado
+  const { data: cargoDocIds } = useQuery({
+    queryKey: ["documentos-cargo-ids", fCargo],
+    enabled: fCargo !== "all",
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("documentos_cargos")
+        .select("documento_id")
+        .eq("cargo_id", fCargo);
+      if (error) throw error;
+      return (data as { documento_id: string }[]).map((r) => r.documento_id);
+    },
+    staleTime: 60_000,
+  });
+
   // Reset de página al cambiar filtros
-  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, search]);
+  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, fCargo, search]);
 
   // Tabla paginada (server-side)
   const { data: documentos = [], isLoading } = useQuery({
-    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, search, page],
+    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, fCargo, cargoDocIds, search, page],
+    enabled: fCargo === "all" || cargoDocIds !== undefined,
     queryFn: async () => {
       let q = supabase.from("documentos").select(DOC_COLS);
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
@@ -55,6 +73,7 @@ export function DocumentosView() {
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
       if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const safe = s.replace(/[%,()]/g, " ");
@@ -71,7 +90,8 @@ export function DocumentosView() {
 
   // Conteo total para la paginación (mismos filtros)
   const { data: total = 0 } = useQuery({
-    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, search],
+    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, fCargo, cargoDocIds, search],
+    enabled: fCargo === "all" || cargoDocIds !== undefined,
     queryFn: async () => {
       let q = supabase.from("documentos").select("*", { count: "exact", head: true });
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
@@ -79,6 +99,7 @@ export function DocumentosView() {
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
       if (fTipo !== "all") q = q.eq("tipo", fTipo);
+      if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const safe = s.replace(/[%,()]/g, " ");
@@ -130,6 +151,7 @@ export function DocumentosView() {
     if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
     if (fArea !== "all") q = q.eq("area_id", fArea);
     if (fTipo !== "all") q = q.eq("tipo", fTipo);
+    if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
     const s = search.trim();
     if (s) {
       const safe = s.replace(/[%,()]/g, " ");
@@ -216,14 +238,16 @@ export function DocumentosView() {
           options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
         <FilterSelect value={fTipo} onChange={setFTipo} placeholder="Tipo"
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
+        <FilterSelect value={fCargo} onChange={setFCargo} placeholder="Cargo"
+          options={cargos.filter((c) => c.activo).map((c) => ({ value: c.id, label: c.nombre }))} />
       </div>
 
       <div className="mb-4">
-        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || search.trim() !== "") ? (
+        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || fCargo !== "all" || search.trim() !== "") ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{total} resultados</span>
             <button
-              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setSearch(""); setPage(0); }}
+              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setFCargo("all"); setSearch(""); setPage(0); }}
               className="flex items-center gap-1 text-primary hover:underline"
             >
               <X className="h-3 w-3" /> Limpiar filtros
