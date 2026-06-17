@@ -131,8 +131,16 @@ export function DocumentosRed() {
   });
 
   const { initialNodes, initialEdges } = useMemo(() => {
-    const nodes: Node[] = docs.map((d) => {
-      const nivelDocs = docs.filter((x) => x.nivel === d.nivel);
+    const docsVisibles = cargoSeleccionado
+      ? docs.filter((d) => docCargos.some((dc) => dc.documento_id === d.id && dc.cargo_id === cargoSeleccionado))
+      : docs;
+    const docIdsVisibles = new Set(docsVisibles.map((d) => d.id));
+    const relsVisibles = rels.filter(
+      (r) => docIdsVisibles.has(r.documento_origen_id) && docIdsVisibles.has(r.documento_destino_id)
+    );
+
+    const nodes: Node[] = docsVisibles.map((d) => {
+      const nivelDocs = docsVisibles.filter((x) => x.nivel === d.nivel);
       const nivelIdx = nivelDocs.indexOf(d);
       const xSpacing = Math.max(180, 900 / Math.max(nivelDocs.length, 1));
       return {
@@ -155,7 +163,7 @@ export function DocumentosRed() {
         style: getNodeStyle(d.tipo),
       };
     });
-    const edges: Edge[] = rels.map((r, i) => ({
+    const edges: Edge[] = relsVisibles.map((r, i) => ({
       id: `e${i}`,
       source: r.documento_origen_id,
       target: r.documento_destino_id,
@@ -165,7 +173,7 @@ export function DocumentosRed() {
       ...getEdgeStyle(r.tipo_relacion),
     }));
     return { initialNodes: nodes, initialEdges: edges };
-  }, [docs, rels]);
+  }, [docs, rels, cargoSeleccionado, docCargos]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
