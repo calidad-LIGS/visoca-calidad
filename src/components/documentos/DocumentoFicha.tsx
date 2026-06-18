@@ -425,75 +425,438 @@ function VersionesTab({ doc }: { doc: Documento }) {
 
 function CargosTab({ doc }: { doc: Documento }) {
   const qc = useQueryClient();
+
+  const { data: areas = [] } = useAreas();
+
   const { data: cargos = [] } = useCargos();
-  const [buscadorCargo, setBuscadorCargo] = useState("");
+
+  // Cargar vinculaciones existentes del documento (cargo + área)
+
   const { data: asignados = [] } = useQuery({
+
     queryKey: ["doc-cargos", doc.id],
+
     queryFn: async () => {
+
       const { data, error } = await supabase
+
         .from("documentos_cargos")
-        .select("id, cargo_id")
-        .eq("documento_id", doc.id);
+
+        .select("id, cargo_id, area_id")
+
+        .eq("documento_id", doc.id)
+
+        .order("area_id");
+
       if (error) throw error;
-      return data as { id: string; cargo_id: string }[];
+
+      return data as { id: string; cargo_id: string; area_id: string | null }[];
+
     },
+
   });
 
-  const toggle = useMutation({
-    mutationFn: async (cargoId: string) => {
-      const existing = asignados.find((a) => a.cargo_id === cargoId);
-      if (existing) {
-        const { error } = await supabase.from("documentos_cargos").delete().eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("documentos_cargos")
-          .insert({ documento_id: doc.id, cargo_id: cargoId });
-        if (error) throw error;
-      }
+  // Cargar cargo_areas para saber qué cargos pertenecen a cada área
+
+  const { data: cargoAreas = [] } = useQuery({
+
+    queryKey: ["cargo-areas-all"],
+
+    queryFn: async () => {
+
+      const { data } = await supabase
+
+        .from("cargo_areas")
+
+        .select("cargo_id, area_id");
+
+      return (data ?? []) as { cargo_id: string; area_id: string }[];
+
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["doc-cargos", doc.id] }),
+
+    staleTime: 300_000,
+
+  });
+
+  // Estado del formulario para agregar nueva vinculación
+
+  const [areaSelec, setAreaSelec] = useState("");
+
+  const [cargoSelec, setCargoSelec] = useState("");
+
+  const [busqArea, setBusqArea] = useState("");
+
+  const [busqCargo, setBusqCargo] = useState("");
+
+  const [showAreaList, setShowAreaList] = useState(false);
+
+  const [showCargoList, setShowCargoList] = useState(false);
+
+  // Cargos disponibles para el área seleccionada
+
+  const cargoIdsEnArea = cargoAreas
+
+    .filter((ca) => ca.area_id === areaSelec)
+
+    .map((ca) => ca.cargo_id);
+
+  const cargosEnArea = cargos.filter(
+
+    (c) => c.activo && cargoIdsEnArea.includes(c.id)
+
+  );
+
+  const areasFiltradas = busqArea
+
+    ? areas.filter((a) => a.nombre.toLowerCase().includes(busqArea.toLowerCase()))
+
+    : areas;
+
+  const cargosFiltrados = busqCargo
+
+    ? cargosEnArea.filter((c) => c.nombre.toLowerCase().includes(busqCargo.toLowerCase()))
+
+    : cargosEnArea;
+
+  // Agregar vinculación
+
+  const agregar = useMutation({
+
+    mutationFn: async () => {
+
+      if (!areaSelec || !cargoSelec) throw new Error("Selecciona área y cargo");
+
+      const { error } = await supabase.from("documentos_cargos").insert({
+
+        documento_id: doc.id,
+
+        cargo_id: cargoSelec,
+
+        area_id: areaSelec,
+
+      });
+
+      if (error) throw error;
+
+    },
+
+    onSuccess: () => {
+
+      qc.invalidateQueries({ queryKey: ["doc-cargos", doc.id] });
+
+      toast.success("Cargo vinculado");
+
+      setAreaSelec("");
+
+      setCargoSelec("");
+
+      setBusqArea("");
+
+      setBusqCargo("");
+
+    },
+
     onError: (e: Error) => toast.error(e.message),
+
   });
 
-  const asignadosSet = new Set(asignados.map((a) => a.cargo_id));
-  const activos = cargos.filter((c) => c.activo);
-  const cargosFiltrados = buscadorCargo
-    ? activos.filter((c) =>
-        c.nombre.toLowerCase().includes(buscadorCargo.toLowerCase()))
-    : activos;
+  // Eliminar vinculación
+
+  const eliminar = useMutation({
+
+    mutationFn: async (id: string) => {
+
+      const { error } = await supabase.from("documentos_cargos").delete().eq("id", id);
+
+      if (error) throw error;
+
+    },
+
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["doc-cargos", doc.id] }),
+
+    onError: (e: Error) => toast.error(e.message),
+
+  });
+
+  // Helpers de nombre
+
+  const areaNombre = (id: string | null) => areas.find((a) => a.id === id)?.nombre ?? "Sin área";
+
+  const cargoNombre = (id: string) => cargos.find((c) => c.id === id)?.nombre ?? "—";
+
+  // Agrupar vinculaciones por área para mostrar
+
+  const porArea = asignados.reduce<Record<string, typeof asignados>>((acc, a) => {
+
+    const key = a.area_id ?? "__sin_area__";
+
+    if (!acc[key]) acc[key] = [];
+
+    acc[key].push(a);
+
+    return acc;
+
+  }, {});
+
+  const areaSelecNombre = areas.find((a) => a.id === areaSelec)?.nombre ?? "";
+
+  const cargoSelecNombre = cargos.find((c) => c.id === cargoSelec)?.nombre ?? "";
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm text-muted-foreground">Selecciona los cargos a los que aplica este documento.</p>
-      <Input
-        value={buscadorCargo}
-        onChange={(e) => setBuscadorCargo(e.target.value)}
-        placeholder="Buscar cargo..."
-        className="mb-2"
-      />
-      <div className="flex flex-wrap gap-2">
-        {cargosFiltrados.map((c) => {
-          const on = asignadosSet.has(c.id);
-          return (
-            <button
-              key={c.id}
-              onClick={() => toggle.mutate(c.id)}
-              className={
-                on
-                  ? "rounded-md bg-primary px-3 py-1 text-sm text-primary-foreground"
-                  : "rounded-md border border-border px-3 py-1 text-sm text-muted-foreground hover:border-primary/50"
-              }
-            >
-              {c.nombre}
-            </button>
-          );
-        })}
-      </div>
-      {buscadorCargo && cargosFiltrados.length === 0 && (
-        <p className="text-xs text-muted-foreground py-2">No hay cargos que coincidan.</p>
+
+    <div className="space-y-4">
+
+      <p className="text-sm text-muted-foreground">
+
+        Vincula cargos por área. El mismo cargo en áreas distintas se registra como puesto independiente.
+
+      </p>
+
+      {/* Lista de vinculaciones existentes agrupadas por área */}
+
+      {asignados.length > 0 ? (
+
+        <div className="space-y-3">
+
+          {Object.entries(porArea).map(([areaId, items]) => (
+
+            <div key={areaId} className="rounded-md border border-border overflow-hidden">
+
+              <div className="bg-elevated px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+
+                {areaNombre(areaId === "__sin_area__" ? null : areaId)}
+
+              </div>
+
+              <div className="divide-y divide-border">
+
+                {items.map((a) => (
+
+                  <div key={a.id} className="flex items-center justify-between px-3 py-2">
+
+                    <span className="text-sm text-foreground">{cargoNombre(a.cargo_id)}</span>
+
+                    <Button
+
+                      variant="ghost"
+
+                      size="icon"
+
+                      className="h-7 w-7 text-muted-foreground hover:text-danger"
+
+                      onClick={() => eliminar.mutate(a.id)}
+
+                    >
+
+                      <X className="h-3.5 w-3.5" />
+
+                    </Button>
+
+                  </div>
+
+                ))}
+
+              </div>
+
+            </div>
+
+          ))}
+
+        </div>
+
+      ) : (
+
+        <p className="text-sm text-muted-foreground italic">Sin cargos vinculados aún.</p>
+
       )}
+
+      {/* Formulario para agregar nueva vinculación */}
+
+      <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-3">
+
+        <p className="text-xs font-semibold text-primary">Agregar vinculación</p>
+
+        {/* Selector de Área */}
+
+        <div className="space-y-1">
+
+          <label className="text-xs font-medium text-muted-foreground">Área</label>
+
+          <div className="relative">
+
+            <Input
+
+              value={showAreaList ? busqArea : areaSelecNombre}
+
+              onChange={(e) => { setBusqArea(e.target.value); setShowAreaList(true); }}
+
+              onFocus={() => setShowAreaList(true)}
+
+              placeholder="Buscar área..."
+
+              className="text-sm h-8"
+
+            />
+
+            {showAreaList && (
+
+              <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-surface shadow-lg max-h-40 overflow-y-auto">
+
+                {areasFiltradas.map((a) => (
+
+                  <button
+
+                    key={a.id}
+
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-elevated text-foreground"
+
+                    onMouseDown={(e) => e.preventDefault()}
+
+                    onClick={() => {
+
+                      setAreaSelec(a.id);
+
+                      setCargoSelec("");
+
+                      setBusqArea("");
+
+                      setBusqCargo("");
+
+                      setShowAreaList(false);
+
+                    }}
+
+                  >
+
+                    {a.nombre}
+
+                  </button>
+
+                ))}
+
+                {areasFiltradas.length === 0 && (
+
+                  <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+        </div>
+
+        {/* Selector de Cargo (solo si hay área seleccionada) */}
+
+        {areaSelec && (
+
+          <div className="space-y-1">
+
+            <label className="text-xs font-medium text-muted-foreground">
+
+              Cargo en {areaSelecNombre}
+
+            </label>
+
+            {cargosEnArea.length === 0 ? (
+
+              <p className="text-xs text-muted-foreground italic">
+
+                No hay cargos vinculados a esta área. Ve a Configuración → Cargos para agregarlos.
+
+              </p>
+
+            ) : (
+
+              <div className="relative">
+
+                <Input
+
+                  value={showCargoList ? busqCargo : cargoSelecNombre}
+
+                  onChange={(e) => { setBusqCargo(e.target.value); setShowCargoList(true); }}
+
+                  onFocus={() => setShowCargoList(true)}
+
+                  placeholder="Buscar cargo..."
+
+                  className="text-sm h-8"
+
+                />
+
+                {showCargoList && (
+
+                  <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-surface shadow-lg max-h-40 overflow-y-auto">
+
+                    {cargosFiltrados.map((c) => (
+
+                      <button
+
+                        key={c.id}
+
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-elevated text-foreground"
+
+                        onMouseDown={(e) => e.preventDefault()}
+
+                        onClick={() => {
+
+                          setCargoSelec(c.id);
+
+                          setBusqCargo("");
+
+                          setShowCargoList(false);
+
+                        }}
+
+                      >
+
+                        {c.nombre}
+
+                      </button>
+
+                    ))}
+
+                    {cargosFiltrados.length === 0 && (
+
+                      <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+
+                    )}
+
+                  </div>
+
+                )}
+
+              </div>
+
+            )}
+
+          </div>
+
+        )}
+
+        <Button
+
+          size="sm"
+
+          onClick={() => agregar.mutate()}
+
+          disabled={!areaSelec || !cargoSelec || agregar.isPending}
+
+          className="w-full"
+
+        >
+
+          {agregar.isPending ? "Vinculando..." : "Vincular cargo"}
+
+        </Button>
+
+      </div>
+
     </div>
+
   );
+
 }
 
