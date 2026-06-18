@@ -101,7 +101,8 @@ export function CargosTab() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cargos"] });
-      qc.invalidateQueries({ queryKey: ["cargo-areas"] });
+      qc.invalidateQueries({ queryKey: ["cargo-areas", editing?.id] });
+      qc.invalidateQueries({ queryKey: ["cargo-areas-all"] });
       toast.success(editing ? "Cargo actualizado" : "Cargo creado");
       setOpen(false);
     },
@@ -187,11 +188,15 @@ export function CargosTab() {
                 {areas.map((a) => (
                   <div
                     key={a.id}
-                    className="flex items-center gap-2 py-1 cursor-pointer"
+                    className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-elevated rounded px-1"
                     onClick={() => toggleCargoArea(a.id)}
                   >
-                    <Checkbox checked={selectedAreas.includes(a.id)} />
-                    <span className="text-sm">{a.nombre}</span>
+                    <Checkbox
+                      checked={selectedAreas.includes(a.id)}
+                      onCheckedChange={() => toggleCargoArea(a.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="text-sm select-none">{a.nombre}</span>
                   </div>
                 ))}
               </ScrollArea>
