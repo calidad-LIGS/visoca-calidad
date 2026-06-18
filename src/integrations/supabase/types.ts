@@ -592,21 +592,31 @@ export type Database = {
       }
       documentos_cargos: {
         Row: {
+          area_id: string | null
           cargo_id: string
           documento_id: string
           id: string
         }
         Insert: {
+          area_id?: string | null
           cargo_id: string
           documento_id: string
           id?: string
         }
         Update: {
+          area_id?: string | null
           cargo_id?: string
           documento_id?: string
           id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "documentos_cargos_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "documentos_cargos_cargo_id_fkey"
             columns: ["cargo_id"]
