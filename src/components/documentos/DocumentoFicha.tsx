@@ -614,17 +614,19 @@ function CargosTab({ doc }: { doc: Documento }) {
 
       {/* Lista de vinculaciones existentes agrupadas por área */}
 
-      {asignados.length > 0 ? (
+      {asignados.filter((a) => !!a.area_id).length > 0 ? (
 
         <div className="space-y-3">
 
-          {Object.entries(porArea).map(([areaId, items]) => (
+          {Object.entries(porArea)
+            .filter(([areaId]) => areaId !== "__sin_area__")
+            .map(([areaId, items]) => (
 
             <div key={areaId} className="rounded-md border border-border overflow-hidden">
 
               <div className="bg-elevated px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
 
-                {areaNombre(areaId === "__sin_area__" ? null : areaId)}
+                {areaNombre(areaId)}
 
               </div>
 
@@ -700,7 +702,7 @@ function CargosTab({ doc }: { doc: Documento }) {
 
             {showAreaList && (
 
-              <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-surface shadow-lg max-h-40 overflow-y-auto">
+              <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-surface shadow-lg max-h-40 overflow-y-auto" style={{ backgroundColor: "#1A1D27" }}>
 
                 {areasFiltradas.map((a) => (
 
@@ -788,7 +790,7 @@ function CargosTab({ doc }: { doc: Documento }) {
 
                 {showCargoList && (
 
-                  <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-surface shadow-lg max-h-40 overflow-y-auto">
+                  <div className="absolute z-20 mt-1 w-full rounded-md border border-border bg-surface shadow-lg max-h-40 overflow-y-auto" style={{ backgroundColor: "#1A1D27" }}>
 
                     {cargosFiltrados.map((c) => (
 
