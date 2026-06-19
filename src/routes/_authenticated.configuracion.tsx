@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { AreasTab } from "@/components/configuracion/AreasTab";
 import { CargosTab } from "@/components/configuracion/CargosTab";
 import { AlertasTab } from "@/components/configuracion/AlertasTab";
 import { DatosEmpresaTab } from "@/components/configuracion/DatosEmpresaTab";
+import { TabErrorBoundary } from "@/components/configuracion/TabErrorBoundary";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
   head: () => ({
@@ -65,22 +66,34 @@ function ConfiguracionPage() {
 
 
         <TabsContent value="usuarios">
-          <UsuariosTab />
+          <TabErrorBoundary tab="Usuarios">
+            <UsuariosTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="empresas">
-          <EmpresasTab />
+          <TabErrorBoundary tab="Empresas">
+            <EmpresasTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="areas">
-          <AreasTab />
+          <TabErrorBoundary tab="Áreas">
+            <AreasTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="cargos">
-          <CargosTab />
+          <TabErrorBoundary tab="Cargos">
+            <CargosTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="alertas">
-          <AlertasTab />
+          <TabErrorBoundary tab="Alertas">
+            <AlertasTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="empresa">
-          <DatosEmpresaTab />
+          <TabErrorBoundary tab="Datos de empresa">
+            <DatosEmpresaTab />
+          </TabErrorBoundary>
         </TabsContent>
       </Tabs>
     </>
