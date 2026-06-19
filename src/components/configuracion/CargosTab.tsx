@@ -53,9 +53,10 @@ export function CargosTab() {
       const { data, error } = await supabase
         .from("cargo_areas")
         .select("cargo_id, area_id");
-      if (error) throw error;
+      if (error) { console.warn("[cargo_areas]", error.message); return []; }
       return (data ?? []) as { cargo_id: string; area_id: string }[];
     },
+    retry: false,
   });
 
   // Relaciones del cargo en edición
