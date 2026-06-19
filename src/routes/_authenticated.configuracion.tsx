@@ -66,22 +66,34 @@ function ConfiguracionPage() {
 
 
         <TabsContent value="usuarios">
-          <UsuariosTab />
+          <TabErrorBoundary tab="Usuarios">
+            <UsuariosTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="empresas">
-          <EmpresasTab />
+          <TabErrorBoundary tab="Empresas">
+            <EmpresasTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="areas">
-          <AreasTab />
+          <TabErrorBoundary tab="Áreas">
+            <AreasTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="cargos">
-          <CargosTab />
+          <TabErrorBoundary tab="Cargos">
+            <CargosTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="alertas">
-          <AlertasTab />
+          <TabErrorBoundary tab="Alertas">
+            <AlertasTab />
+          </TabErrorBoundary>
         </TabsContent>
         <TabsContent value="empresa">
-          <DatosEmpresaTab />
+          <TabErrorBoundary tab="Datos de empresa">
+            <DatosEmpresaTab />
+          </TabErrorBoundary>
         </TabsContent>
       </Tabs>
     </>
