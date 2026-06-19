@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Pencil } from "lucide-react";
@@ -29,8 +29,8 @@ export function CargosTab() {
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Cargo | null>(null);
-  const [nombre, setNombre] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingNombre, setEditingNombre] = useState("");
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
 
   // 1. Query simple de cargos (sin join)
@@ -59,27 +59,6 @@ export function CargosTab() {
     retry: false,
   });
 
-  // Relaciones del cargo en edición
-  const { data: cargoAreas = [] } = useQuery({
-    queryKey: ["cargo-areas", editing?.id],
-    enabled: !!editing?.id,
-    retry: false,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cargo_areas")
-        .select("area_id")
-        .eq("cargo_id", editing!.id);
-      if (error) { console.warn("[cargo_areas edit]", error.message); return []; }
-      return (data ?? [])
-        .map((r) => r.area_id)
-        .filter((id): id is string => !!id);
-    },
-  });
-
-  useEffect(() => {
-    if (editing?.id) setSelectedAreas(cargoAreas);
-  }, [cargoAreas, editing?.id]);
-
   const toggleCargoArea = (areaId: string) => {
     setSelectedAreas((prev) =>
       prev.includes(areaId) ? prev.filter((id) => id !== areaId) : [...prev, areaId],
@@ -89,17 +68,17 @@ export function CargosTab() {
   const save = useMutation({
     mutationFn: async () => {
       let cargoId: string;
-      if (editing) {
+      if (editingId) {
         const { error } = await supabase
           .from("cargos")
-          .update({ nombre })
-          .eq("id", editing.id);
+          .update({ nombre: editingNombre })
+          .eq("id", editingId);
         if (error) throw error;
-        cargoId = editing.id;
+        cargoId = editingId;
       } else {
         const { data, error } = await supabase
           .from("cargos")
-          .insert({ nombre })
+          .insert({ nombre: editingNombre })
           .select("id")
           .single();
         if (error) throw error;
@@ -116,9 +95,8 @@ export function CargosTab() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["cargos"] });
-      qc.invalidateQueries({ queryKey: ["cargo-areas", editing?.id] });
       qc.invalidateQueries({ queryKey: ["cargo-areas-all"] });
-      toast.success(editing ? "Cargo actualizado" : "Cargo creado");
+      toast.success(editingId ? "Cargo actualizado" : "Cargo creado");
       setOpen(false);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -137,15 +115,20 @@ export function CargosTab() {
   });
 
   const openNew = () => {
-    setEditing(null);
-    setNombre("");
+    setEditingId(null);
+    setEditingNombre("");
     setSelectedAreas([]);
     setOpen(true);
   };
+
   const openEdit = (c: Cargo) => {
-    setEditing(c);
-    setNombre(c.nombre);
-    setSelectedAreas([]);
+    const areasActuales = todasCargoAreas
+      .filter((ca) => ca.cargo_id === c.id)
+      .map((ca) => ca.area_id)
+      .filter(Boolean) as string[];
+    setEditingId(c.id);
+    setEditingNombre(c.nombre);
+    setSelectedAreas(areasActuales);
     setOpen(true);
   };
 
@@ -193,15 +176,15 @@ export function CargosTab() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Editar cargo" : "Nuevo cargo"}</DialogTitle>
+            <DialogTitle>{editingId ? "Editar cargo" : "Nuevo cargo"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
               <Label htmlFor="cargo-nombre">Nombre</Label>
               <Input
                 id="cargo-nombre"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+                value={editingNombre}
+                onChange={(e) => setEditingNombre(e.target.value)}
               />
             </div>
             <div className="space-y-2 mt-3">
@@ -238,7 +221,7 @@ export function CargosTab() {
             </Button>
             <Button
               onClick={() => save.mutate()}
-              disabled={!nombre.trim() || save.isPending}
+              disabled={!editingNombre.trim() || save.isPending}
             >
               Guardar
             </Button>
