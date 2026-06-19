@@ -63,11 +63,13 @@ export function CargosTab() {
   const { data: cargoAreas = [] } = useQuery({
     queryKey: ["cargo-areas", editing?.id],
     enabled: !!editing?.id,
+    retry: false,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("cargo_areas")
         .select("area_id")
         .eq("cargo_id", editing!.id);
+      if (error) { console.warn("[cargo_areas edit]", error.message); return []; }
       return (data ?? [])
         .map((r) => r.area_id)
         .filter((id): id is string => !!id);
