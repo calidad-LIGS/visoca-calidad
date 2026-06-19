@@ -25,10 +25,6 @@ interface Cargo {
   activo: boolean;
 }
 
-interface CargoRow extends Cargo {
-  cargo_areas: { area_id: string; areas: { nombre: string } | null }[];
-}
-
 export function CargosTab() {
   const qc = useQueryClient();
   const { data: areas = [] } = useAreas();
@@ -37,18 +33,32 @@ export function CargosTab() {
   const [nombre, setNombre] = useState("");
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
 
+  // 1. Query simple de cargos (sin join)
   const { data: cargos = [], isLoading } = useQuery({
     queryKey: ["cargos"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cargos")
-        .select("id, nombre, activo, cargo_areas(area_id, areas(nombre))")
+        .select("id, nombre, activo")
         .order("nombre");
       if (error) throw error;
-      return data as unknown as CargoRow[];
+      return data as Cargo[];
     },
   });
 
+  // 2. Query separada de todas las relaciones cargo-área
+  const { data: todasCargoAreas = [] } = useQuery({
+    queryKey: ["cargo-areas-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cargo_areas")
+        .select("cargo_id, area_id");
+      if (error) throw error;
+      return (data ?? []) as { cargo_id: string; area_id: string }[];
+    },
+  });
+
+  // Relaciones del cargo en edición
   const { data: cargoAreas = [] } = useQuery({
     queryKey: ["cargo-areas", editing?.id],
     enabled: !!editing?.id,
@@ -57,7 +67,9 @@ export function CargosTab() {
         .from("cargo_areas")
         .select("area_id")
         .eq("cargo_id", editing!.id);
-      return (data ?? []).map((r) => r.area_id).filter((id): id is string => !!id);
+      return (data ?? [])
+        .map((r) => r.area_id)
+        .filter((id): id is string => !!id);
     },
   });
 
@@ -134,9 +146,12 @@ export function CargosTab() {
     setOpen(true);
   };
 
-  const areasLabel = (row: CargoRow) => {
-    const nombres = (row.cargo_areas ?? [])
-      .map((ca) => ca.areas?.nombre)
+  const areasLabel = (cargoId: string) => {
+    const areaIds = todasCargoAreas
+      .filter((ca) => ca.cargo_id === cargoId)
+      .map((ca) => ca.area_id);
+    const nombres = areaIds
+      .map((id) => areas.find((a) => a.id === id)?.nombre)
       .filter(Boolean) as string[];
     if (nombres.length === 0) return "—";
     const shown = nombres.slice(0, 2).join(", ");
@@ -159,7 +174,7 @@ export function CargosTab() {
         {cargos.map((c) => (
           <tr key={c.id}>
             <Td className="font-medium text-foreground">{c.nombre}</Td>
-            <Td className="text-muted-foreground">{areasLabel(c)}</Td>
+            <Td className="text-muted-foreground">{areasLabel(c.id)}</Td>
             <Td>
               <Switch checked={c.activo} onCheckedChange={() => toggle.mutate(c)} />
             </Td>
@@ -179,12 +194,21 @@ export function CargosTab() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Nombre</Label>
-              <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              <Label htmlFor="cargo-nombre">Nombre</Label>
+              <Input
+                id="cargo-nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+              />
             </div>
             <div className="space-y-2 mt-3">
-              <Label className="text-sm">Áreas donde aplica</Label>
-              <ScrollArea className="h-36 rounded-md border border-border p-2">
+              <Label htmlFor="cargo-areas" className="text-sm">
+                Áreas donde aplica
+              </Label>
+              <ScrollArea
+                id="cargo-areas"
+                className="h-36 rounded-md border border-border p-2"
+              >
                 {areas.map((a) => (
                   <div
                     key={a.id}
@@ -200,6 +224,9 @@ export function CargosTab() {
                   </div>
                 ))}
               </ScrollArea>
+              <p className="text-xs text-muted-foreground">
+                {selectedAreas.length} áreas seleccionadas
+              </p>
             </div>
           </div>
           <DialogFooter>
