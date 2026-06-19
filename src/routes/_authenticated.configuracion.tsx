@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import { AreasTab } from "@/components/configuracion/AreasTab";
 import { CargosTab } from "@/components/configuracion/CargosTab";
 import { AlertasTab } from "@/components/configuracion/AlertasTab";
 import { DatosEmpresaTab } from "@/components/configuracion/DatosEmpresaTab";
+import { TabErrorBoundary } from "@/components/configuracion/TabErrorBoundary";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
   head: () => ({
