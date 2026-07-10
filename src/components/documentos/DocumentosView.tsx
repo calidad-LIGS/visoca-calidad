@@ -38,6 +38,8 @@ export function DocumentosView() {
   const [fArea, setFArea] = useState("all");
   const [fTipo, setFTipo] = useState("all");
   const [fCargo, setFCargo] = useState("all");
+  const [cargoBusq, setCargoBusq] = useState("");
+  const [cargoOpen, setCargoOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Documento | null>(null);
@@ -238,8 +240,49 @@ export function DocumentosView() {
           options={areas.map((a) => ({ value: a.id, label: a.nombre }))} />
         <FilterSelect value={fTipo} onChange={setFTipo} placeholder="Tipo"
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
-        <FilterSelect value={fCargo} onChange={setFCargo} placeholder="Cargo"
-          options={cargos.filter((c) => c.activo).map((c) => ({ value: c.id, label: c.nombre }))} />
+        <div className="relative">
+          {fCargo !== "all" ? (
+            <button
+              onClick={() => setFCargo("all")}
+              className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm text-primary"
+            >
+              {cargos.find((c) => c.id === fCargo)?.nombre ?? "Cargo"}
+              <X className="h-3 w-3" />
+            </button>
+          ) : (
+            <>
+              <Input
+                value={cargoBusq}
+                onChange={(e) => { setCargoBusq(e.target.value); setCargoOpen(true); }}
+                onFocus={() => setCargoOpen(true)}
+                onBlur={() => setTimeout(() => setCargoOpen(false), 150)}
+                placeholder="Filtrar por cargo..."
+                className="h-9 w-52 text-sm"
+              />
+              {cargoOpen && cargoBusq && (
+                <div
+                  className="absolute left-0 top-full z-30 mt-1 w-52 overflow-auto rounded-md border border-border shadow-xl"
+                  style={{ backgroundColor: "#1A1D27", maxHeight: "200px" }}
+                >
+                  {cargos
+                    .filter((c) => c.activo && c.nombre.toLowerCase().includes(cargoBusq.toLowerCase()))
+                    .map((c) => (
+                      <button
+                        key={c.id}
+                        onMouseDown={() => { setFCargo(c.id); setCargoBusq(""); setCargoOpen(false); }}
+                        className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-primary/10"
+                      >
+                        {c.nombre}
+                      </button>
+                    ))}
+                  {cargos.filter((c) => c.activo && c.nombre.toLowerCase().includes(cargoBusq.toLowerCase())).length === 0 && (
+                    <p className="px-3 py-2 text-xs text-muted-foreground">Sin coincidencias</p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="mb-4">
@@ -247,7 +290,7 @@ export function DocumentosView() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{total} resultados</span>
             <button
-              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setFCargo("all"); setSearch(""); setPage(0); }}
+              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setFCargo("all"); setSearch(""); setPage(0); setCargoBusq(""); setCargoOpen(false); }}
               className="flex items-center gap-1 text-primary hover:underline"
             >
               <X className="h-3 w-3" /> Limpiar filtros
