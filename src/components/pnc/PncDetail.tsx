@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
+import { PncFormDialog } from "./PncFormDialog";
 import { toast } from "sonner";
 import { Clock, Plus, Pencil, Upload, FileText, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +35,7 @@ export interface Pnc {
   razon: string | null; metodologia: string | null;
   fecha_origen: string; fecha_compromiso: string | null; fecha_cierre: string | null;
   solucion: string | null; observaciones: string | null;
+  auditoria_id: string | null;
 }
 
 
@@ -65,6 +68,8 @@ function Body({ pncId }: { pncId: string }) {
     },
   });
 
+  const [editOpen, setEditOpen] = useState(false);
+
   if (!pnc) return null;
   const info = diasInfo(pnc.fecha_origen, pnc.fecha_compromiso, pnc.estatus === "cerrado");
   const colorClass = { accent: "text-accent", warning: "text-warning", danger: "text-danger" }[info.color];
@@ -75,6 +80,9 @@ function Body({ pncId }: { pncId: string }) {
         <div className="flex items-center justify-between gap-2">
           <span className="font-mono text-lg font-semibold text-primary">{pnc.numero_anio}</span>
           <StatusBadge cfg={PNC_ESTATUS[pnc.estatus]} />
+          <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
+            <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar PNC
+          </Button>
         </div>
         <SheetTitle className="text-sm font-normal text-muted-foreground">{pnc.descripcion}</SheetTitle>
         <div className="flex items-center justify-between pt-1">
@@ -94,6 +102,12 @@ function Body({ pncId }: { pncId: string }) {
         <TabsContent value="acciones" className="pt-4"><AccionesPlan pncId={pnc.id} /></TabsContent>
         <TabsContent value="hist" className="pt-4"><HistorialTab pncId={pnc.id} /></TabsContent>
       </Tabs>
+
+      <PncFormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        editing={pnc}
+      />
     </>
   );
 }
@@ -156,6 +170,20 @@ function RegistroTab({ pnc }: { pnc: Pnc }) {
         <Info label="Fecha origen" value={pnc.fecha_origen} />
         <Info label="Fecha compromiso" value={pnc.fecha_compromiso ?? "—"} />
         <Info label="Fecha cierre" value={pnc.fecha_cierre ?? "—"} />
+        <div className="col-span-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Auditoría vinculada</p>
+          {pnc.auditoria_id ? (
+            <Link
+              to="/auditorias/$id"
+              params={{ id: pnc.auditoria_id }}
+              className="mt-0.5 text-sm text-primary hover:underline"
+            >
+              Ver auditoría →
+            </Link>
+          ) : (
+            <p className="mt-0.5 text-sm text-foreground">—</p>
+          )}
+        </div>
       </div>
       <div className="border-t border-border pt-3">
         {editing ? (

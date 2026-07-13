@@ -26,9 +26,29 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 
+interface PncFormDialogProps {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  editing?: {
+    id: string;
+    descripcion: string;
+    origen: string;
+    empresa_id: string | null;
+    area_ids: string[];
+    responsables: string[];
+    proceso_documento_id: string | null;
+    proceso_texto: string | null;
+    razon: string | null;
+    fecha_origen: string;
+    fecha_compromiso: string | null;
+    observaciones: string | null;
+    auditoria_id: string | null;
+  };
+}
+
 export function PncFormDialog({
-  open, onOpenChange,
-}: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  open, onOpenChange, editing,
+}: PncFormDialogProps) {
   const qc = useQueryClient();
   const { perfil } = useAuth();
   const { data: empresas = [] } = useEmpresas();
@@ -49,6 +69,22 @@ export function PncFormDialog({
   const [fechaOrigen, setFechaOrigen] = useState(toISODate(new Date()));
   const [fechaCompromiso, setFechaCompromiso] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [auditoriaId, setAuditoriaId] = useState<string>("");
+  const [auditoriaBusq, setAuditoriaBusq] = useState("");
+  const [auditoriaOpen, setAuditoriaOpen] = useState(false);
+
+  const { data: auditorias = [] } = useQuery({
+    queryKey: ["auditorias-selector"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("auditorias")
+        .select("id, codigo_auditoria, tipo, fecha_inicio")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      return (data ?? []) as { id: string; codigo_auditoria: string; tipo: string; fecha_inicio: string | null }[];
+    },
+    staleTime: 60_000,
+  });
 
   const { data: docs = [] } = useQuery({
     queryKey: ["doc-options"],
@@ -76,8 +112,26 @@ export function PncFormDialog({
       setProcesoBusqueda(""); setProcesoDocId(""); setProcesoTexto("");
       setRazon("nc_menor");
       setFechaOrigen(toISODate(new Date())); setFechaCompromiso(""); setObservaciones("");
+      setAuditoriaId(""); setAuditoriaBusq(""); setAuditoriaOpen(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open && editing) {
+      setDescripcion(editing.descripcion);
+      setOrigen(editing.origen);
+      setEmpresa(editing.empresa_id ?? "");
+      setAreaIds(editing.area_ids ?? []);
+      setResponsables(editing.responsables ?? []);
+      setProcesoDocId(editing.proceso_documento_id ?? "");
+      setProcesoTexto(editing.proceso_texto ?? "");
+      setRazon(editing.razon ?? "nc_menor");
+      setFechaOrigen(editing.fecha_origen);
+      setFechaCompromiso(editing.fecha_compromiso ?? "");
+      setObservaciones(editing.observaciones ?? "");
+      setAuditoriaId(editing.auditoria_id ?? "");
+    }
+  }, [open, editing]);
 
   // Auto-sugerir compromiso según razón
   useEffect(() => {
@@ -92,14 +146,10 @@ export function PncFormDialog({
         d.nombre.toLowerCase().includes(procesoBusqueda.toLowerCase()))
     : docs.slice(0, 30);
 
-  const create = useMutation({
+  const save = useMutation({
     mutationFn: async () => {
-      const anio = new Date(fechaOrigen).getFullYear();
-      const numero = await nextPncNumero(anio);
-      const { data, error } = await supabase.from("pnc").insert({
-        numero_anio: numero,
+      const payload = {
         descripcion,
-        estatus: "pendiente",
         origen,
         empresa_id: empresa || null,
         area_id: areaIds[0] || null,
@@ -108,10 +158,23 @@ export function PncFormDialog({
         proceso_documento_id: procesoDocId || null,
         proceso_texto: procesoDocId ? null : (procesoTexto || null),
         razon,
-        metodologia: "na",
         fecha_origen: fechaOrigen,
         fecha_compromiso: fechaCompromiso || null,
         observaciones: observaciones || null,
+        auditoria_id: auditoriaId || null,
+      };
+      if (editing) {
+        const { error } = await supabase.from("pnc").update(payload).eq("id", editing.id);
+        if (error) throw error;
+        return null;
+      }
+      const anio = new Date(fechaOrigen).getFullYear();
+      const numero = await nextPncNumero(anio);
+      const { data, error } = await supabase.from("pnc").insert({
+        ...payload,
+        numero_anio: numero,
+        estatus: "pendiente",
+        metodologia: "na",
         creado_por: perfil?.id ?? null,
       }).select("id").single();
       if (error) throw error;
@@ -130,7 +193,8 @@ export function PncFormDialog({
     },
     onSuccess: (numero) => {
       qc.invalidateQueries({ queryKey: ["pnc"] });
-      toast.success(`${numero} creado`);
+      if (editing) qc.invalidateQueries({ queryKey: ["pnc-detail", editing.id] });
+      toast.success(editing ? "PNC actualizado" : `${numero} creado`);
       onOpenChange(false);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -143,7 +207,7 @@ export function PncFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader><DialogTitle>Nuevo Producto No Conforme</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{editing ? "Editar PNC" : "Nuevo PNC"}</DialogTitle></DialogHeader>
         <div className="grid grid-cols-1 gap-4 py-2 sm:grid-cols-2">
           <F label="Empresa">
             <Sel value={empresa} onChange={setEmpresa} options={empresas.map((e) => ({ value: e.id, label: e.nombre }))} />
@@ -253,14 +317,65 @@ export function PncFormDialog({
           <F label="Fecha compromiso">
             <Input type="date" value={fechaCompromiso} onChange={(e) => setFechaCompromiso(e.target.value)} />
           </F>
+          <div className="space-y-1.5">
+            <Label>Vincular a auditoría (opcional)</Label>
+            <div className="relative">
+              {auditoriaId ? (
+                <div className="flex items-center gap-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                  <span className="flex-1 text-primary">
+                    {auditorias.find((a) => a.id === auditoriaId)?.codigo_auditoria ?? "Auditoría seleccionada"}
+                  </span>
+                  <button onClick={() => { setAuditoriaId(""); setAuditoriaBusq(""); }} className="text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    value={auditoriaBusq}
+                    onChange={(e) => { setAuditoriaBusq(e.target.value); setAuditoriaOpen(true); }}
+                    onFocus={() => setAuditoriaOpen(true)}
+                    onBlur={() => setTimeout(() => setAuditoriaOpen(false), 150)}
+                    placeholder="Buscar auditoría..."
+                    className="h-9 text-sm"
+                  />
+                  {auditoriaOpen && (
+                    <div
+                      className="absolute left-0 top-full z-30 mt-1 w-full overflow-auto rounded-md border border-border shadow-xl"
+                      style={{ backgroundColor: "#1A1D27", maxHeight: "180px" }}
+                    >
+                      {auditorias
+                        .filter((a) =>
+                          !auditoriaBusq ||
+                          a.codigo_auditoria.toLowerCase().includes(auditoriaBusq.toLowerCase())
+                        )
+                        .map((a) => (
+                          <button
+                            key={a.id}
+                            onMouseDown={() => { setAuditoriaId(a.id); setAuditoriaBusq(""); setAuditoriaOpen(false); }}
+                            className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-primary/10"
+                          >
+                            <span className="font-mono text-primary">{a.codigo_auditoria}</span>
+                            <span className="ml-2 text-xs text-muted-foreground capitalize">{a.tipo} — {a.fecha_inicio ?? "Sin fecha"}</span>
+                          </button>
+                        ))}
+                      {auditorias.filter((a) => !auditoriaBusq || a.codigo_auditoria.toLowerCase().includes(auditoriaBusq.toLowerCase())).length === 0 && (
+                        <p className="px-3 py-2 text-xs text-muted-foreground">Sin resultados</p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
           <F label="Observaciones" full>
             <Textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
           </F>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={() => create.mutate()} disabled={!descripcion.trim() || create.isPending}>
-            {create.isPending ? "Creando…" : "Crear PNC"}
+          <Button onClick={() => save.mutate()} disabled={!descripcion.trim() || save.isPending}>
+            {save.isPending ? "Guardando..." : editing ? "Guardar cambios" : "Crear PNC"}
           </Button>
         </DialogFooter>
       </DialogContent>
