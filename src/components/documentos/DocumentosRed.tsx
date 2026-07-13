@@ -83,6 +83,7 @@ export function DocumentosRed() {
   const [buscador, setBuscador] = useState(false);
   const [cargoSearch, setCargoSearch] = useState("");
   const [cargoSeleccionado, setCargoSeleccionado] = useState<string | null>(null);
+  const [docSearch, setDocSearch] = useState("");
 
   const { data: docs = [] } = useQuery({
     queryKey: ["documentos-red-nodes"],
@@ -131,9 +132,15 @@ export function DocumentosRed() {
   });
 
   const { initialNodes, initialEdges } = useMemo(() => {
-    const docsVisibles = cargoSeleccionado
-      ? docs.filter((d) => docCargos.some((dc) => dc.documento_id === d.id && dc.cargo_id === cargoSeleccionado))
+    const docsFiltradosPorBusqueda = docSearch.trim()
+      ? docs.filter((d) =>
+          d.codigo.toLowerCase().includes(docSearch.toLowerCase()) ||
+          d.nombre.toLowerCase().includes(docSearch.toLowerCase())
+        )
       : docs;
+    const docsVisibles = cargoSeleccionado
+      ? docsFiltradosPorBusqueda.filter((d) => docCargos.some((dc) => dc.documento_id === d.id && dc.cargo_id === cargoSeleccionado))
+      : docsFiltradosPorBusqueda;
     const docIdsVisibles = new Set(docsVisibles.map((d) => d.id));
     const relsVisibles = rels.filter(
       (r) => docIdsVisibles.has(r.documento_origen_id) && docIdsVisibles.has(r.documento_destino_id)
@@ -173,7 +180,7 @@ export function DocumentosRed() {
       ...getEdgeStyle(r.tipo_relacion),
     }));
     return { initialNodes: nodes, initialEdges: edges };
-  }, [docs, rels, cargoSeleccionado, docCargos]);
+  }, [docs, rels, cargoSeleccionado, docCargos, docSearch]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -236,8 +243,14 @@ export function DocumentosRed() {
                 placeholder="Buscar cargo para filtrar documentos..."
                 className="max-w-sm"
               />
+              <Input
+                value={docSearch}
+                onChange={(e) => setDocSearch(e.target.value)}
+                placeholder="Buscar documento..."
+                className="h-8 w-52 text-sm"
+              />
               {cargoSearch && (
-                <div className="absolute z-10 mt-1 max-h-48 max-w-sm overflow-auto rounded-md border border-border bg-surface shadow-lg">
+                <div className="absolute z-10 mt-1 max-h-48 max-w-sm overflow-auto rounded-md border border-border bg-surface shadow-lg" style={{ backgroundColor: "#1A1D27" }}>
                   {cargos
                     .filter((c) => c.nombre.toLowerCase().includes(cargoSearch.toLowerCase()))
                     .map((c) => (
