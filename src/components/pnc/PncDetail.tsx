@@ -11,7 +11,7 @@ import { SignedFileLink } from "@/components/common/SignedFileLink";
 import { diasInfo } from "@/lib/pncUtils";
 
 import {
-  StatusBadge, PNC_ESTATUS, PNC_RAZON_LABEL, PNC_ORIGEN_LABEL, PNC_METODOLOGIA_LABEL,
+  StatusBadge, PNC_ESTATUS, PNC_RAZON_LABEL, PNC_ORIGEN_LABEL,
 } from "@/lib/badges";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -88,12 +88,10 @@ function Body({ pncId }: { pncId: string }) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="registro">Registro</TabsTrigger>
           <TabsTrigger value="acciones">Acciones</TabsTrigger>
-          <TabsTrigger value="evid">Evidencias</TabsTrigger>
           <TabsTrigger value="hist">Historial</TabsTrigger>
         </TabsList>
         <TabsContent value="registro" className="pt-4"><RegistroTab pnc={pnc} /></TabsContent>
         <TabsContent value="acciones" className="pt-4"><AccionesPlan pncId={pnc.id} /></TabsContent>
-        <TabsContent value="evid" className="pt-4"><EvidenciasTab pnc={pnc} /></TabsContent>
         <TabsContent value="hist" className="pt-4"><HistorialTab pncId={pnc.id} /></TabsContent>
       </Tabs>
     </>
@@ -107,13 +105,12 @@ function RegistroTab({ pnc }: { pnc: Pnc }) {
   const { data: empresas = [] } = useEmpresas();
   const { data: areas = [] } = useAreas();
   const [editing, setEditing] = useState(false);
-  const [solucion, setSolucion] = useState(pnc.solucion ?? "");
   const [observaciones, setObservaciones] = useState(pnc.observaciones ?? "");
 
   const save = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("pnc")
-        .update({ solucion: solucion || null, observaciones: observaciones || null }).eq("id", pnc.id);
+        .update({ observaciones: observaciones || null }).eq("id", pnc.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -155,7 +152,6 @@ function RegistroTab({ pnc }: { pnc: Pnc }) {
           )}
         </div>
         <Info label="Razón" value={pnc.razon ? PNC_RAZON_LABEL[pnc.razon] : "—"} />
-        <Info label="Metodología" value={pnc.metodologia ? PNC_METODOLOGIA_LABEL[pnc.metodologia] : "—"} />
         <Info label="Proceso" value={pnc.proceso_texto ?? (pnc.proceso_documento_id ? "Documento vinculado" : "—")} />
         <Info label="Fecha origen" value={pnc.fecha_origen} />
         <Info label="Fecha compromiso" value={pnc.fecha_compromiso ?? "—"} />
@@ -164,8 +160,6 @@ function RegistroTab({ pnc }: { pnc: Pnc }) {
       <div className="border-t border-border pt-3">
         {editing ? (
           <div className="space-y-2">
-            <Label>Solución</Label>
-            <Textarea value={solucion} onChange={(e) => setSolucion(e.target.value)} />
             <Label>Observaciones</Label>
             <Textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             <div className="flex gap-2">
@@ -175,7 +169,6 @@ function RegistroTab({ pnc }: { pnc: Pnc }) {
           </div>
         ) : (
           <>
-            <Info label="Solución" value={pnc.solucion ?? "—"} />
             <div className="mt-2"><Info label="Observaciones" value={pnc.observaciones ?? "—"} /></div>
             <Button size="sm" variant="outline" className="mt-3" onClick={() => setEditing(true)}>
               <Pencil className="mr-1.5 h-4 w-4" /> Editar
