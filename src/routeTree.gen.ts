@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated.index'
+import { Route as ColaboradorUsuarioRouteImport } from './routes/colaborador.$usuario'
 import { Route as AuthenticatedProyectosRouteImport } from './routes/_authenticated.proyectos'
 import { Route as AuthenticatedNoConformidadesRouteImport } from './routes/_authenticated.no-conformidades'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated.documentos'
@@ -43,6 +44,11 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ColaboradorUsuarioRoute = ColaboradorUsuarioRouteImport.update({
+  id: '/colaborador/$usuario',
+  path: '/colaborador/$usuario',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedProyectosRoute = AuthenticatedProyectosRouteImport.update({
   id: '/proyectos',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
+  '/colaborador/$usuario': typeof ColaboradorUsuarioRoute
   '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
   '/api/public/ensure-buckets': typeof ApiPublicEnsureBucketsRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
+  '/colaborador/$usuario': typeof ColaboradorUsuarioRoute
   '/': typeof AuthenticatedIndexRoute
   '/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/documentos/red': typeof AuthenticatedDocumentosRedRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/_authenticated/proyectos': typeof AuthenticatedProyectosRoute
+  '/colaborador/$usuario': typeof ColaboradorUsuarioRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/auditorias/$id': typeof AuthenticatedAuditoriasIdRoute
   '/_authenticated/documentos/red': typeof AuthenticatedDocumentosRedRoute
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/documentos'
     | '/no-conformidades'
     | '/proyectos'
+    | '/colaborador/$usuario'
     | '/auditorias/$id'
     | '/documentos/red'
     | '/api/public/ensure-buckets'
@@ -179,6 +189,7 @@ export interface FileRouteTypes {
     | '/configuracion'
     | '/no-conformidades'
     | '/proyectos'
+    | '/colaborador/$usuario'
     | '/'
     | '/auditorias/$id'
     | '/documentos/red'
@@ -196,6 +207,7 @@ export interface FileRouteTypes {
     | '/_authenticated/documentos'
     | '/_authenticated/no-conformidades'
     | '/_authenticated/proyectos'
+    | '/colaborador/$usuario'
     | '/_authenticated/'
     | '/_authenticated/auditorias/$id'
     | '/_authenticated/documentos/red'
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ColaboradorUsuarioRoute: typeof ColaboradorUsuarioRoute
   ApiPublicEnsureBucketsRoute: typeof ApiPublicEnsureBucketsRoute
 }
 
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/colaborador/$usuario': {
+      id: '/colaborador/$usuario'
+      path: '/colaborador/$usuario'
+      fullPath: '/colaborador/$usuario'
+      preLoaderRoute: typeof ColaboradorUsuarioRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/proyectos': {
       id: '/_authenticated/proyectos'
@@ -381,8 +401,19 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ColaboradorUsuarioRoute: ColaboradorUsuarioRoute,
   ApiPublicEnsureBucketsRoute: ApiPublicEnsureBucketsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

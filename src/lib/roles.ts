@@ -7,6 +7,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   jefe_calidad: "Jefe de Calidad",
   analista: "Analista",
   auditor_interno: "Auditor Interno",
+  colaborador: "Colaborador",
 };
 
 export const ROLE_OPTIONS: { value: AppRole; label: string }[] = (

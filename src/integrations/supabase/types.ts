@@ -475,6 +475,75 @@ export type Database = {
         }
         Relationships: []
       }
+      colaborador_documentos: {
+        Row: {
+          id: string
+          colaborador_id: string
+          documento_id: string
+          visible: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          colaborador_id: string
+          documento_id: string
+          visible?: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          colaborador_id?: string
+          documento_id?: string
+          visible?: boolean
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "colaborador_documentos_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "colaborador_documentos_colaborador_id_fkey"
+            columns: ["colaborador_id"]
+            isOneToOne: false
+            referencedRelation: "colaboradores"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      colaboradores: {
+        Row: {
+          id: string
+          nombre_completo: string
+          usuario: string
+          empresa_id: string | null
+          cargo_id: string | null
+          activo: boolean
+          created_at: string | null
+        }
+        Insert: {
+          id: string
+          nombre_completo: string
+          usuario: string
+          empresa_id?: string | null
+          cargo_id?: string | null
+          activo?: boolean
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          nombre_completo?: string
+          usuario?: string
+          empresa_id?: string | null
+          cargo_id?: string | null
+          activo?: boolean
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       configuracion_alertas: {
         Row: {
           dias_alerta_documentos_sin_revision: number
@@ -1365,6 +1434,7 @@ export type Database = {
         | "jefe_calidad"
         | "analista"
         | "auditor_interno"
+        | "colaborador"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1497,6 +1567,7 @@ export const Constants = {
         "jefe_calidad",
         "analista",
         "auditor_interno",
+        "colaborador",
       ],
     },
   },
