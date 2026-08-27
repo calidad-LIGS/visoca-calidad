@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, Check, ChevronDown, ChevronRight, CalendarPlus, List, BarChart2 } from "lucide-react";
+import { Plus, Trash2, Check, ChevronDown, ChevronRight, CalendarPlus, List, BarChart2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { usePermisos } from "@/lib/permisos";
@@ -13,9 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import type { Proyecto } from "./ProyectoFormDialog";
 
 interface Actividad {
@@ -36,13 +33,6 @@ interface Subtarea {
   id: string; actividad_id: string; descripcion: string;
   completada: boolean | null; fecha_limite: string | null; orden: number | null;
 }
-
-const ACT_ESTATUS = [
-  { value: "pendiente", label: "Pendiente" },
-  { value: "en_proceso", label: "En proceso" },
-  { value: "finalizado", label: "Finalizado" },
-  { value: "cancelado", label: "Cancelado" },
-];
 
 export function ProyectoDetail({
   proyecto, onClose,
@@ -78,6 +68,41 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
       return data as Actividad[];
     },
   });
+
+  useEffect(() => {
+    if (!actividades || actividades.length === 0) return;
+    if (!("Notification" in window)) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const vencidas = actividades.filter((a) => {
+      if (!a.fecha_fin_plan) return false;
+      if (a.estatus === "finalizado" || a.estatus === "cancelado") return false;
+      const fin = new Date(a.fecha_fin_plan);
+      fin.setHours(0, 0, 0, 0);
+      return fin < today;
+    });
+
+    if (vencidas.length === 0) return;
+
+    const notificar = () => {
+      vencidas.forEach((a) => {
+        new Notification("VISOCA — Actividad vencida", {
+          body: `"${a.nombre}" venció el ${a.fecha_fin_plan}`,
+          icon: "/favicon.ico",
+        });
+      });
+    };
+
+    if (Notification.permission === "granted") {
+      notificar();
+    } else if (Notification.permission !== "denied") {
+      Notification.requestPermission().then((perm) => {
+        if (perm === "granted") notificar();
+      });
+    }
+  }, [actividades]);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["actividades", proyecto.id] });
@@ -162,6 +187,26 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
         </div>
       </SheetHeader>
 
+      {(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const vencidas = actividades.filter((a) => {
+          if (!a.fecha_fin_plan || a.estatus === "finalizado" || a.estatus === "cancelado") return false;
+          const fin = new Date(a.fecha_fin_plan);
+          fin.setHours(0, 0, 0, 0);
+          return fin < today;
+        });
+        if (vencidas.length === 0) return null;
+        return (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3 text-sm text-warning">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              {vencidas.length} actividad{vencidas.length > 1 ? "es" : ""} vencida{vencidas.length > 1 ? "s" : ""}: {vencidas.map((a) => a.nombre).join(", ")}
+            </span>
+          </div>
+        );
+      })()}
+
       <div className="mt-4 space-y-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <div className="mb-2 flex items-center justify-between text-sm">
@@ -225,6 +270,7 @@ function Body({ proyecto }: { proyecto: Proyecto }) {
                 <ActividadRow
                   key={act.id}
                   act={act}
+                  proyectoId={proyecto.id}
                   editable={perms.editarProyecto}
                   expanded={expanded.has(act.id)}
                   onToggleExpand={() => setExpanded((s) => {
@@ -366,9 +412,10 @@ function ActividadesGantt({ actividades }: { actividades: Actividad[] }) {
 
 
 function ActividadRow({
-  act, editable, expanded, onToggleExpand, onUpdate, onDelete, onToggleCal,
+  act, proyectoId, editable, expanded, onToggleExpand, onUpdate, onDelete, onToggleCal,
 }: {
   act: Actividad;
+  proyectoId: string;
   editable: boolean;
   expanded: boolean;
   onToggleExpand: () => void;
@@ -383,16 +430,7 @@ function ActividadRow({
           {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
         <span className="flex-1 truncate text-sm text-foreground">{act.nombre}</span>
-        <Select
-          value={act.estatus}
-          onValueChange={(v) => onUpdate({ estatus: v, avance: v === "finalizado" ? 100 : act.avance })}
-          disabled={!editable}
-        >
-          <SelectTrigger className="h-7 w-[130px] text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {ACT_ESTATUS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <StatusBadge cfg={PROY_ESTATUS[act.estatus ?? "pendiente"]} />
         <div className="flex w-28 items-center gap-2">
           <Progress value={act.avance ?? 0} className="h-1.5" />
           <span className="w-9 text-right text-xs text-muted-foreground">{act.avance ?? 0}%</span>
@@ -412,18 +450,9 @@ function ActividadRow({
         <div className="border-t border-border p-3">
           {editable && (
             <div className="mb-3 flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                Avance
-                <Input
-                  type="number" min={0} max={100}
-                  defaultValue={act.avance ?? 0}
-                  className="h-7 w-20"
-                  onBlur={(e) => {
-                    const v = Math.max(0, Math.min(100, Number(e.target.value)));
-                    if (v !== (act.avance ?? 0)) onUpdate({ avance: v });
-                  }}
-                />
-              </label>
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                Avance: <span className="font-medium text-foreground">{act.avance ?? 0}%</span>
+              </span>
               <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 Fin plan
                 <Input
@@ -442,14 +471,14 @@ function ActividadRow({
               </label>
             </div>
           )}
-          <Subtareas actividadId={act.id} editable={editable} />
+          <Subtareas actividadId={act.id} editable={editable} proyectoId={proyectoId} />
         </div>
       )}
     </div>
   );
 }
 
-function Subtareas({ actividadId, editable }: { actividadId: string; editable: boolean }) {
+function Subtareas({ actividadId, editable, proyectoId }: { actividadId: string; editable: boolean; proyectoId: string }) {
   const qc = useQueryClient();
   const [nueva, setNueva] = useState("");
   const { data: subtareas = [] } = useQuery({
@@ -461,7 +490,11 @@ function Subtareas({ actividadId, editable }: { actividadId: string; editable: b
       return data as Subtarea[];
     },
   });
-  const refresh = () => qc.invalidateQueries({ queryKey: ["subtareas", actividadId] });
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["subtareas", actividadId] });
+    qc.invalidateQueries({ queryKey: ["actividades", proyectoId] });
+    qc.invalidateQueries({ queryKey: ["proyectos"] });
+  };
 
   const add = useMutation({
     mutationFn: async () => {

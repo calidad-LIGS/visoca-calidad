@@ -37,7 +37,7 @@ export function DocumentosView() {
   const [fEmpresa, setFEmpresa] = useState("all");
   const [fArea, setFArea] = useState("all");
   const [fTipo, setFTipo] = useState("all");
-  const [fCargo, setFCargo] = useState("all");
+  const [fCargos, setFCargos] = useState<string[]>([]);
   const [cargoBusq, setCargoBusq] = useState("");
   const [cargoOpen, setCargoOpen] = useState(false);
   const [page, setPage] = useState(0);
@@ -48,13 +48,13 @@ export function DocumentosView() {
 
   // IDs de documentos asignados al cargo seleccionado
   const { data: cargoDocIds } = useQuery({
-    queryKey: ["documentos-cargo-ids", fCargo],
-    enabled: fCargo !== "all",
+    queryKey: ["documentos-cargo-ids", fCargos],
+    enabled: fCargos.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documentos_cargos")
         .select("documento_id")
-        .eq("cargo_id", fCargo);
+        .in("cargo_id", fCargos);
       if (error) throw error;
       return (data as { documento_id: string }[]).map((r) => r.documento_id);
     },
@@ -62,12 +62,12 @@ export function DocumentosView() {
   });
 
   // Reset de página al cambiar filtros
-  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, fCargo, search]);
+  useEffect(() => { setPage(0); }, [tab, fEmpresa, fArea, fTipo, fCargos, search]);
 
   // Tabla paginada (server-side)
   const { data: documentos = [], isLoading } = useQuery({
-    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, fCargo, cargoDocIds, search, page],
-    enabled: fCargo === "all" || cargoDocIds !== undefined,
+    queryKey: ["documentos", tab, fEmpresa, fArea, fTipo, fCargos, cargoDocIds, search, page],
+    enabled: fCargos.length === 0 || cargoDocIds !== undefined,
     queryFn: async () => {
       let q = supabase.from("documentos").select(DOC_COLS);
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
@@ -75,7 +75,7 @@ export function DocumentosView() {
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
       if (fTipo !== "all") q = q.eq("tipo", fTipo);
-      if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
+      if (fCargos.length > 0) q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const safe = s.replace(/[%,()]/g, " ");
@@ -92,8 +92,8 @@ export function DocumentosView() {
 
   // Conteo total para la paginación (mismos filtros)
   const { data: total = 0 } = useQuery({
-    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, fCargo, cargoDocIds, search],
-    enabled: fCargo === "all" || cargoDocIds !== undefined,
+    queryKey: ["documentos-count", tab, fEmpresa, fArea, fTipo, fCargos, cargoDocIds, search],
+    enabled: fCargos.length === 0 || cargoDocIds !== undefined,
     queryFn: async () => {
       let q = supabase.from("documentos").select("*", { count: "exact", head: true });
       if (tab === "vigentes") q = q.eq("estatus", "vigente");
@@ -101,7 +101,7 @@ export function DocumentosView() {
       if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
       if (fArea !== "all") q = q.eq("area_id", fArea);
       if (fTipo !== "all") q = q.eq("tipo", fTipo);
-      if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
+      if (fCargos.length > 0) q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
       const s = search.trim();
       if (s) {
         const safe = s.replace(/[%,()]/g, " ");
@@ -153,7 +153,7 @@ export function DocumentosView() {
     if (fEmpresa !== "all") q = q.eq("empresa_id", fEmpresa);
     if (fArea !== "all") q = q.eq("area_id", fArea);
     if (fTipo !== "all") q = q.eq("tipo", fTipo);
-    if (fCargo !== "all") q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
+    if (fCargos.length > 0) q = q.in("id", cargoDocIds?.length ? cargoDocIds : ["00000000-0000-0000-0000-000000000000"]);
     const s = search.trim();
     if (s) {
       const safe = s.replace(/[%,()]/g, " ");
@@ -241,15 +241,15 @@ export function DocumentosView() {
         <FilterSelect value={fTipo} onChange={setFTipo} placeholder="Tipo"
           options={Object.entries(DOC_TIPO_LABEL).map(([value, label]) => ({ value, label }))} />
         <div className="relative">
-          {fCargo !== "all" ? (
-            <button
-              onClick={() => setFCargo("all")}
-              className="flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm text-primary"
-            >
-              {cargos.find((c) => c.id === fCargo)?.nombre ?? "Cargo"}
-              <X className="h-3 w-3" />
-            </button>
-          ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {fCargos.map((id) => (
+              <span key={id} className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
+                {cargos.find((c) => c.id === id)?.nombre ?? id}
+                <button onClick={() => setFCargos((prev) => prev.filter((x) => x !== id))}>
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
             <>
               <Input
                 value={cargoBusq}
@@ -265,32 +265,32 @@ export function DocumentosView() {
                   style={{ backgroundColor: "#1A1D27", maxHeight: "200px" }}
                 >
                   {cargos
-                    .filter((c) => c.activo && c.nombre.toLowerCase().includes(cargoBusq.toLowerCase()))
+                    .filter((c) => c.activo && !fCargos.includes(c.id) && c.nombre.toLowerCase().includes(cargoBusq.toLowerCase()))
                     .map((c) => (
                       <button
                         key={c.id}
-                        onMouseDown={() => { setFCargo(c.id); setCargoBusq(""); setCargoOpen(false); }}
+                        onMouseDown={() => { setFCargos((prev) => [...prev, c.id]); setCargoBusq(""); setCargoOpen(false); }}
                         className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-primary/10"
                       >
                         {c.nombre}
                       </button>
                     ))}
-                  {cargos.filter((c) => c.activo && c.nombre.toLowerCase().includes(cargoBusq.toLowerCase())).length === 0 && (
+                  {cargos.filter((c) => c.activo && !fCargos.includes(c.id) && c.nombre.toLowerCase().includes(cargoBusq.toLowerCase())).length === 0 && (
                     <p className="px-3 py-2 text-xs text-muted-foreground">Sin coincidencias</p>
                   )}
                 </div>
               )}
             </>
-          )}
+          </div>
         </div>
       </div>
 
       <div className="mb-4">
-        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || fCargo !== "all" || search.trim() !== "") ? (
+        {(fEmpresa !== "all" || fArea !== "all" || fTipo !== "all" || fCargos.length > 0 || search.trim() !== "") ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{total} resultados</span>
             <button
-              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setFCargo("all"); setSearch(""); setPage(0); setCargoBusq(""); setCargoOpen(false); }}
+              onClick={() => { setFEmpresa("all"); setFArea("all"); setFTipo("all"); setFCargos([]); setSearch(""); setPage(0); setCargoBusq(""); setCargoOpen(false); }}
               className="flex items-center gap-1 text-primary hover:underline"
             >
               <X className="h-3 w-3" /> Limpiar filtros

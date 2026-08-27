@@ -560,6 +560,30 @@ function CargosTab({ doc }: { doc: Documento }) {
 
   });
 
+  const agregarTodos = useMutation({
+    mutationFn: async () => {
+      if (!areaSelec) throw new Error("Selecciona un área primero");
+      const yaAsignados = new Set(
+        asignados.filter((a) => a.area_id === areaSelec).map((a) => a.cargo_id)
+      );
+      const nuevos = cargosEnArea
+        .filter((c) => !yaAsignados.has(c.id))
+        .map((c) => ({ documento_id: doc.id, cargo_id: c.id, area_id: areaSelec }));
+      if (nuevos.length === 0) throw new Error("Todos los cargos de esta área ya están vinculados");
+      const { error } = await supabase.from("documentos_cargos").insert(nuevos);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["doc-cargos", doc.id] });
+      toast.success("Todos los cargos del área vinculados");
+      setAreaSelec("");
+      setCargoSelec("");
+      setBusqArea("");
+      setBusqCargo("");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   // Eliminar vinculación
 
   const eliminar = useMutation({
@@ -852,6 +876,17 @@ function CargosTab({ doc }: { doc: Documento }) {
 
           {agregar.isPending ? "Vinculando..." : "Vincular cargo"}
 
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full"
+          onClick={() => agregarTodos.mutate()}
+          disabled={!areaSelec || agregarTodos.isPending}
+          title="Vincular todos los cargos de esta área al documento"
+        >
+          {agregarTodos.isPending ? "Vinculando..." : `Vincular todos (${cargosEnArea.length})`}
         </Button>
 
       </div>
