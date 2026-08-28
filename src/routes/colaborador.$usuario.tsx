@@ -193,11 +193,22 @@ function ColaboradorPortal() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
                         {d.archivo_url && (
-                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
-                            <a href={d.archivo_url} target="_blank" rel="noopener noreferrer" title="Ver PDF">
-                              <Download className="h-3.5 w-3.5" />
-                            </a>
-                          </Button>
+                          <button
+                            className="rounded p-1 text-muted-foreground hover:text-foreground"
+                            title="Ver PDF"
+                            onClick={async () => {
+                              const { data, error } = await supabase.storage
+                                .from("documentos")
+                                .createSignedUrl(d.archivo_url!, 60);
+                              if (error || !data?.signedUrl) {
+                                alert("No se pudo abrir el archivo.");
+                                return;
+                              }
+                              window.open(data.signedUrl, "_blank");
+                            }}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
                         )}
                         {d.drive_url && (
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
