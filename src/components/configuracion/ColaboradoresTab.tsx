@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Copy, Check, Pencil, Users } from "lucide-react";
+import { Plus, Copy, Check, Pencil, Users, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { crearColaborador } from "@/lib/colaborador.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { ColaboradorDocumentos } from "@/components/colaboradores/ColaboradorDocumentos";
 import { useEmpresas, useCargos } from "@/hooks/useCatalogos";
 import { DataTable, Td } from "@/components/common/DataTable";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ export function ColaboradoresTab() {
   const [cargoId, setCargoId] = useState("");
   const [usuario, setUsuario] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [configColaborador, setConfigColaborador] = useState<Colaborador | null>(null);
 
   const { data: colaboradores = [], isLoading } = useQuery({
     queryKey: ["colaboradores"],
@@ -185,6 +187,14 @@ export function ColaboradoresTab() {
               <Switch checked={c.activo} onCheckedChange={() => toggle.mutate(c)} />
             </Td>
             <Td className="text-right">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setConfigColaborador(c)}
+                title="Configurar documentos"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
               <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
                 <Pencil className="h-4 w-4" />
               </Button>
@@ -254,6 +264,21 @@ export function ColaboradoresTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {configColaborador && (
+        <div className="fixed inset-0 z-50 flex items-start justify-end">
+          <div
+            className="fixed inset-0 bg-black/40"
+            onClick={() => setConfigColaborador(null)}
+          />
+          <div className="relative z-10 flex h-screen w-full max-w-3xl flex-col bg-background border-l border-border p-6 shadow-2xl overflow-y-auto">
+            <ColaboradorDocumentos
+              colaborador={configColaborador}
+              onClose={() => setConfigColaborador(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

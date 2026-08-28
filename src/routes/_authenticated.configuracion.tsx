@@ -9,7 +9,6 @@ import { AreasTab } from "@/components/configuracion/AreasTab";
 import { CargosTab } from "@/components/configuracion/CargosTab";
 import { AlertasTab } from "@/components/configuracion/AlertasTab";
 import { DatosEmpresaTab } from "@/components/configuracion/DatosEmpresaTab";
-import { ColaboradoresTab } from "@/components/configuracion/ColaboradoresTab";
 import { TabErrorBoundary } from "@/components/configuracion/TabErrorBoundary";
 
 export const Route = createFileRoute("/_authenticated/configuracion")({
@@ -63,7 +62,6 @@ function ConfiguracionPage() {
           <TabsTrigger value="cargos">Cargos</TabsTrigger>
           <TabsTrigger value="alertas">Alertas</TabsTrigger>
           <TabsTrigger value="empresa">Datos de empresa</TabsTrigger>
-          <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
         </TabsList>
 
 
@@ -95,11 +93,6 @@ function ConfiguracionPage() {
         <TabsContent value="empresa">
           <TabErrorBoundary tab="Datos de empresa">
             <DatosEmpresaTab />
-          </TabErrorBoundary>
-        </TabsContent>
-        <TabsContent value="colaboradores">
-          <TabErrorBoundary tab="Colaboradores">
-            <ColaboradoresTab />
           </TabErrorBoundary>
         </TabsContent>
       </Tabs>

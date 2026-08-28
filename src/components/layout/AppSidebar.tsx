@@ -12,6 +12,7 @@ import {
   ChevronRight,
   LogOut,
   X,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -32,6 +33,7 @@ const NAV: NavItem[] = [
   { to: "/documentos", label: "Documentos", icon: FileText },
   { to: "/auditorias", label: "Auditorías", icon: ClipboardCheck },
   { to: "/no-conformidades", label: "No Conformidades", icon: AlertTriangle },
+  { to: "/colaboradores", label: "Colaboradores", icon: Users, gerenteOnly: true },
   { to: "/configuracion", label: "Configuración", icon: Settings, gerenteOnly: true },
 ];
 

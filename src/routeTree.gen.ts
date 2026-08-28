@@ -18,6 +18,7 @@ import { Route as AuthenticatedProyectosRouteImport } from './routes/_authentica
 import { Route as AuthenticatedNoConformidadesRouteImport } from './routes/_authenticated.no-conformidades'
 import { Route as AuthenticatedDocumentosRouteImport } from './routes/_authenticated.documentos'
 import { Route as AuthenticatedConfiguracionRouteImport } from './routes/_authenticated.configuracion'
+import { Route as AuthenticatedColaboradoresRouteImport } from './routes/_authenticated.colaboradores'
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated.calendario'
 import { Route as AuthenticatedAuditoriasRouteImport } from './routes/_authenticated.auditorias'
 import { Route as AuthenticatedDocumentosIndexRouteImport } from './routes/_authenticated.documentos.index'
@@ -72,6 +73,12 @@ const AuthenticatedConfiguracionRoute =
     path: '/configuracion',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedColaboradoresRoute =
+  AuthenticatedColaboradoresRouteImport.update({
+    id: '/colaboradores',
+    path: '/colaboradores',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCalendarioRoute = AuthenticatedCalendarioRouteImport.update({
   id: '/calendario',
   path: '/calendario',
@@ -118,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/calendario': typeof AuthenticatedCalendarioRoute
+  '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
@@ -133,6 +141,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
+  '/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/configuracion': typeof AuthenticatedConfiguracionRoute
   '/no-conformidades': typeof AuthenticatedNoConformidadesRoute
   '/proyectos': typeof AuthenticatedProyectosRoute
@@ -151,6 +160,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/auditorias': typeof AuthenticatedAuditoriasRouteWithChildren
   '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
+  '/_authenticated/colaboradores': typeof AuthenticatedColaboradoresRoute
   '/_authenticated/configuracion': typeof AuthenticatedConfiguracionRoute
   '/_authenticated/documentos': typeof AuthenticatedDocumentosRouteWithChildren
   '/_authenticated/no-conformidades': typeof AuthenticatedNoConformidadesRoute
@@ -171,6 +181,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/auditorias'
     | '/calendario'
+    | '/colaboradores'
     | '/configuracion'
     | '/documentos'
     | '/no-conformidades'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/calendario'
+    | '/colaboradores'
     | '/configuracion'
     | '/no-conformidades'
     | '/proyectos'
@@ -203,6 +215,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/auditorias'
     | '/_authenticated/calendario'
+    | '/_authenticated/colaboradores'
     | '/_authenticated/configuracion'
     | '/_authenticated/documentos'
     | '/_authenticated/no-conformidades'
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracion'
       fullPath: '/configuracion'
       preLoaderRoute: typeof AuthenticatedConfiguracionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/colaboradores': {
+      id: '/_authenticated/colaboradores'
+      path: '/colaboradores'
+      fullPath: '/colaboradores'
+      preLoaderRoute: typeof AuthenticatedColaboradoresRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/calendario': {
@@ -376,6 +396,7 @@ const AuthenticatedDocumentosRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAuditoriasRoute: typeof AuthenticatedAuditoriasRouteWithChildren
   AuthenticatedCalendarioRoute: typeof AuthenticatedCalendarioRoute
+  AuthenticatedColaboradoresRoute: typeof AuthenticatedColaboradoresRoute
   AuthenticatedConfiguracionRoute: typeof AuthenticatedConfiguracionRoute
   AuthenticatedDocumentosRoute: typeof AuthenticatedDocumentosRouteWithChildren
   AuthenticatedNoConformidadesRoute: typeof AuthenticatedNoConformidadesRoute
@@ -386,6 +407,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAuditoriasRoute: AuthenticatedAuditoriasRouteWithChildren,
   AuthenticatedCalendarioRoute: AuthenticatedCalendarioRoute,
+  AuthenticatedColaboradoresRoute: AuthenticatedColaboradoresRoute,
   AuthenticatedConfiguracionRoute: AuthenticatedConfiguracionRoute,
   AuthenticatedDocumentosRoute: AuthenticatedDocumentosRouteWithChildren,
   AuthenticatedNoConformidadesRoute: AuthenticatedNoConformidadesRoute,
