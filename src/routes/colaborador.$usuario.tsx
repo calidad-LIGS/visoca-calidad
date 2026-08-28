@@ -13,6 +13,10 @@ export const Route = createFileRoute("/colaborador/$usuario")({
   component: ColaboradorPortal,
 });
 
+function getPublicUrl(path: string): string {
+  return `https://dxybknubfwqwqrlknncm.supabase.co/storage/v1/object/public/documentos/${path}`;
+}
+
 function ColaboradorPortal() {
   const { usuario } = Route.useParams();
   const [search, setSearch] = useState("");
@@ -193,22 +197,15 @@ function ColaboradorPortal() {
                     <td className="px-4 py-3 text-center">
                       <div className="flex items-center justify-center gap-2">
                         {d.archivo_url && (
-                          <button
-                            className="rounded p-1 text-muted-foreground hover:text-foreground"
+                          <a
+                            href={getPublicUrl(d.archivo_url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             title="Ver PDF"
-                            onClick={async () => {
-                              const { data, error } = await supabase.storage
-                                .from("documentos")
-                                .createSignedUrl(d.archivo_url!, 60);
-                              if (error || !data?.signedUrl) {
-                                alert("No se pudo abrir el archivo.");
-                                return;
-                              }
-                              window.open(data.signedUrl, "_blank");
-                            }}
+                            className="rounded p-1 text-muted-foreground hover:text-foreground"
                           >
                             <Download className="h-3.5 w-3.5" />
-                          </button>
+                          </a>
                         )}
                         {d.drive_url && (
                           <Button size="sm" variant="ghost" className="h-7 w-7 p-0" asChild>
