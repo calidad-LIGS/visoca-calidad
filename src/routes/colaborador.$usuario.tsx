@@ -35,18 +35,18 @@ function ColaboradorPortal() {
   // 2. Cargar documentos visibles para este colaborador
   const { data: documentos = [], isLoading: loadingDocs } = useQuery({
     queryKey: ["colaborador-documentos", usuario],
-    enabled: !!colaborador,
+    enabled: !!colaborador?.id,
     queryFn: async () => {
-      // Step 1: get visible documento_ids joining by usuario
+      // Step 1: get visible documento_ids using colaborador.id directly
       const { data: links, error: linksError } = await supabase
         .from("colaborador_documentos")
-        .select("documento_id, colaboradores!inner(usuario)")
-        .eq("colaboradores.usuario", usuario)
+        .select("documento_id")
+        .eq("colaborador_id", colaborador!.id)
         .eq("visible", true);
 
       if (linksError) {
-        console.error("[portal] links error:", linksError);
-        throw linksError;
+        console.error("[portal] links error:", linksError.message);
+        return [];
       }
       if (!links || links.length === 0) return [];
 
@@ -61,8 +61,8 @@ function ColaboradorPortal() {
         .order("codigo");
 
       if (docsError) {
-        console.error("[portal] docs error:", docsError);
-        throw docsError;
+        console.error("[portal] docs error:", docsError.message);
+        return [];
       }
       return (docs ?? []) as Array<{
         id: string;
