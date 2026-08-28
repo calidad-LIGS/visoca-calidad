@@ -37,12 +37,16 @@ function ColaboradorPortal() {
     queryKey: ["colaborador-documentos", usuario],
     enabled: !!colaborador?.id,
     queryFn: async () => {
+      console.log("[portal] colaborador id:", colaborador?.id);
+
       // Step 1: get visible documento_ids using colaborador.id directly
       const { data: links, error: linksError } = await supabase
         .from("colaborador_documentos")
         .select("documento_id")
         .eq("colaborador_id", colaborador!.id)
         .eq("visible", true);
+
+      console.log("[portal] links result:", links, "error:", linksError);
 
       if (linksError) {
         console.error("[portal] links error:", linksError.message);
@@ -59,6 +63,8 @@ function ColaboradorPortal() {
         .in("id", ids)
         .eq("estatus", "vigente")
         .order("codigo");
+
+      console.log("[portal] docs result:", docs?.length, "error:", docsError);
 
       if (docsError) {
         console.error("[portal] docs error:", docsError.message);
